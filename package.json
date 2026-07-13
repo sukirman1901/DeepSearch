@@ -1,0 +1,36 @@
+{
+  "name": "deep-search",
+  "version": "1.0.0",
+  "description": "Deep Search Engine MCP server: 7 data sources, semantic search via ChromaDB, zero cost alternative to Exa MCP",
+  "type": "module",
+  "main": "./.opencode/plugins/deep-search.js",
+  "keywords": [
+    "pi-package",
+    "search",
+    "semantic-search",
+    "mcp",
+    "chromadb",
+    "web-crawler",
+    "reddit",
+    "youtube",
+    "github",
+    "twitter",
+    "wikipedia",
+    "duckduckgo"
+  ],
+  "author": {
+    "name": "Sukirman",
+    "email": "sukirman1901@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/sukirman1901/DeepSearch",
+  "repository": "https://github.com/sukirman1901/DeepSearch",
+  "license": "MIT",
+  "pi": {
+    "extensions": [
+      "./.pi/extensions/deep-search.ts"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  }
+}

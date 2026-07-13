@@ -1,0 +1,41 @@
+{
+  "name": "deep-search",
+  "version": "1.0.0",
+  "description": "Deep Search Engine MCP server: 7 data sources, semantic search via ChromaDB, zero cost alternative to Exa MCP.",
+  "author": {
+    "name": "Sukirman",
+    "email": "sukirman1901@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/sukirman1901/DeepSearch",
+  "license": "MIT",
+  "keywords": [
+    "search",
+    "semantic-search",
+    "mcp",
+    "chromadb",
+    "web-crawler",
+    "reddit",
+    "youtube",
+    "github",
+    "twitter",
+    "wikipedia",
+    "duckduckgo"
+  ],
+  "skills": "./skills/",
+  "sessionStart": {
+    "skill": "using-deep-search"
+  },
+  "skillInstructions": "Kimi Code tool mapping for Deep Search skills:\n\n- When a Deep Search skill says to ask the user, ask clarifying questions, ask one question at a time, present multiple-choice options, use the terminal for a question, or wait for the user's choice, call Kimi Code's `AskUserQuestion` tool. Do not render those choices as plain assistant text unless `AskUserQuestion` is unavailable or the session is in auto permission mode.\n- For `AskUserQuestion`, provide 1 question with 2-4 concrete options when possible. Put the recommended option first and suffix its label with `(Recommended)`.\n- When a Deep Search skill refers to `TodoWrite`, use Kimi Code's `TodoList` tool.\n- When a Deep Search skill says `Task tool (general-purpose)` or asks you to dispatch a subagent, use Kimi Code's `Agent` tool with a Kimi subagent type.\n- When a Deep Search skill refers to the `Skill` tool, use Kimi Code's native `Skill` tool.\n- Use Kimi Code's `Read`, `Write`, `Edit`, `Bash`, `Grep`, `Glob`, `FetchURL`, `WebSearch`, and MCP tools by their actual exposed names.\n- Deep Search MCP tools (deep_search, index_topic, etc.) are available via MCP and called by tool name directly.",
+  "interface": {
+    "displayName": "Deep Search",
+    "shortDescription": "Deep Search Engine for semantic search across 7 data sources",
+    "longDescription": "Use Deep Search to perform comprehensive research across web, Reddit, YouTube, GitHub, Twitter, Wikipedia, and DuckDuckGo.",
+    "developerName": "Sukirman",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/sukirman1901/DeepSearch"
+  }
+}

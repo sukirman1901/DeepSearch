@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# SessionStart hook for Deep Search plugin (Codex version)
+
+set -euo pipefail
+
+# Determine plugin root directory
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# Read using-deep-search content
+using_deep_search_content=$(cat "${PLUGIN_ROOT}/skills/using-deep-search/SKILL.md" 2>&1 || echo "Error reading using-deep-search skill")
+
+# Escape string for JSON embedding using bash parameter substitution.
+escape_for_json() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    printf '%s' "$s"
+}
+
+using_deep_search_escaped=$(escape_for_json "$using_deep_search_content")
+session_context="<EXTREMELY_IMPORTANT>\nYou have DEEP SEARCH SUPERPOWERS.\n\n**IMPORTANT: The using-deep-search skill content is included below. It is ALREADY LOADED - you are currently following it.**\n\n${using_deep_search_escaped}\n</EXTREMELY_IMPORTANT>"
+
+# Output context injection as JSON for Codex
+printf '{\n  "additionalContext": "%s"\n}\n' "$session_context" | cat
+
+exit 0

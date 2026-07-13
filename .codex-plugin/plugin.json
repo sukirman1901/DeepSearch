@@ -1,0 +1,46 @@
+{
+  "name": "deep-search",
+  "version": "1.0.0",
+  "description": "Deep Search Engine MCP server: 7 data sources, semantic search via ChromaDB, zero cost alternative to Exa MCP.",
+  "author": {
+    "name": "Sukirman",
+    "email": "sukirman1901@users.noreply.github.com",
+    "url": "https://github.com/sukirman1901"
+  },
+  "homepage": "https://github.com/sukirman1901/DeepSearch",
+  "repository": "https://github.com/sukirman1901/DeepSearch",
+  "license": "MIT",
+  "keywords": [
+    "search",
+    "semantic-search",
+    "mcp",
+    "chromadb",
+    "web-crawler",
+    "reddit",
+    "youtube",
+    "github",
+    "twitter",
+    "wikipedia",
+    "duckduckgo"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks-codex.json",
+  "interface": {
+    "displayName": "Deep Search",
+    "shortDescription": "Deep Search Engine for semantic search across 7 data sources",
+    "longDescription": "Use Deep Search to perform comprehensive research across web, Reddit, YouTube, GitHub, Twitter, Wikipedia, and DuckDuckGo. Semantic search via ChromaDB with zero cost.",
+    "developerName": "Sukirman",
+    "category": "Search",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Search for information about AI developments",
+      "Index a topic from multiple sources"
+    ],
+    "websiteURL": "https://github.com/sukirman1901/DeepSearch",
+    "brandColor": "#3B82F6"
+  }
+}

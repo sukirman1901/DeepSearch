@@ -1,0 +1,6 @@
+{
+  "name": "deep-search",
+  "description": "Deep Search Engine MCP server: 7 data sources, semantic search via ChromaDB, zero cost alternative to Exa MCP",
+  "version": "1.0.0",
+  "contextFileName": "GEMINI.md"
+}

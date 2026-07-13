@@ -1,0 +1,20 @@
+{
+  "name": "deep-search-dev",
+  "description": "Development marketplace for Deep Search Engine",
+  "owner": {
+    "name": "Sukirman",
+    "email": "sukirman1901@users.noreply.github.com"
+  },
+  "plugins": [
+    {
+      "name": "deep-search",
+      "description": "Deep Search Engine MCP server: 7 data sources, semantic search via ChromaDB, zero cost alternative to Exa MCP",
+      "version": "1.0.0",
+      "source": "./",
+      "author": {
+        "name": "Sukirman",
+        "email": "sukirman1901@users.noreply.github.com"
+      }
+    }
+  ]
+}
