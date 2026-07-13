@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 
 @dataclass
@@ -12,6 +12,8 @@ class CrawlResult:
     url: str
     metadata: dict[str, Any] = field(default_factory=dict)
     crawled_at: datetime = field(default_factory=datetime.now)
+    category: str = "general"
+    score: float = 0.0  # Relevance score 0-1
 
 
 class BaseCrawler(ABC):
