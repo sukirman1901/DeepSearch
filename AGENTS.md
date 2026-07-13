@@ -2,7 +2,7 @@
 
 ## If You Are an AI Agent
 
-This plugin provides a Deep Search Engine MCP server with 7 data sources, 28 tools, and semantic search capabilities via ChromaDB.
+This plugin provides a Deep Search Engine MCP server with 7 data sources, 29 tools, and semantic search capabilities via ChromaDB.
 
 ## MCP Server Setup
 
@@ -60,6 +60,7 @@ Expected: Server starts without errors.
 | `answer` | Search + synthesis prompt with inline citations |
 | `context_search` | Token-budget-aware snippet packing for agents |
 | `code_search` | Search GitHub + Stack Overflow for code snippets |
+| `smart_search` | Hybrid: compact IR overview + full details for top N (saves 50-70% tokens) |
 
 ### Streaming & Research
 | Tool | Description |

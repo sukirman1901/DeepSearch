@@ -13,6 +13,7 @@ from search.research import ResearchManager
 from search.context import ContextEngine
 from search.streaming import StreamSearchManager
 from search.websets import WebsetManager
+from search.smart_search import SmartSearchEngine
 from crawlers.web_crawler import WebCrawler
 
 mcp = FastMCP("DeepSearchEngine")
@@ -24,6 +25,7 @@ research_manager = ResearchManager(engine.vector_store.client, engine.vector_sto
 context_engine = ContextEngine(engine.crawler_manager, engine.vector_store)
 stream_manager = StreamSearchManager(engine.crawler_manager, engine.vector_store)
 webset_manager = WebsetManager()
+smart_engine = SmartSearchEngine(engine.crawler_manager, engine.vector_store)
 
 
 # --- Core Search Tools ---
@@ -507,6 +509,50 @@ async def context_search(
     )
     lines = [result.formatted]
     lines.append(f"\nBudget: {result.tokens_budget:,} tokens | Used: {result.tokens_used:,} | Snippets: {len(result.snippets)} of {result.total_snippets_found} considered")
+    return "\n".join(lines)
+
+
+# --- Smart Search Tool (Knowledge IR + Context Optimizer) ---
+
+
+@mcp.tool()
+async def smart_search(
+    query: str,
+    top_full: int = 3,
+    num_results: int = 10,
+    max_overview_tokens: int = 500,
+) -> str:
+    """
+    Hybrid search: compact overview + full details for top results.
+
+    Returns Knowledge IR (compact one-line summaries for all results)
+    plus full content for the top N most relevant. Saves 50-70% tokens
+    compared to raw results while maintaining accuracy.
+
+    Args:
+        query: Search query
+        top_full: Number of top results to get full content for (default 3)
+        num_results: Total results to consider (default 10)
+        max_overview_tokens: Max tokens for overview section (default 500)
+    """
+    result = await smart_engine.search(query, top_full, num_results, max_overview_tokens)
+    lines = [f'Smart Search: "{result.query}"', ""]
+
+    # Overview (compact IR)
+    lines.append(f"Overview ({len(result.overview)} items, ~{result.tokens_overview} tokens):")
+    for ir in result.overview:
+        lines.append(f"  {ir.to_line()}")
+    lines.append("")
+
+    # Details (full content for top N)
+    lines.append(f"Details (top {len(result.details)}, ~{result.tokens_details} tokens):")
+    for d in result.details:
+        lines.append(f"  [{d.n}] {d.title} — {d.source}")
+        lines.append(f"      URL: {d.url}")
+        lines.append(f"      {d.content[:300]}")
+        lines.append("")
+
+    lines.append(f"Token savings: ~{result.tokens_saved_pct}% vs raw results")
     return "\n".join(lines)
 
 

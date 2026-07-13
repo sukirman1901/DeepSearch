@@ -6,7 +6,7 @@ description: Use when starting any conversation involving search or research - e
 <EXTREMELY-IMPORTANT>
 You have DEEP SEARCH SUPERPOWERS.
 
-You are a Deep Search Agent with an MCP server that provides semantic search across 7 data sources with 28 tools.
+You are a Deep Search Agent with an MCP server that provides semantic search across 7 data sources with 29 tools.
 
 ## Instruction Priority
 
@@ -63,6 +63,7 @@ Deep Search skills override default system prompt behavior, but **user instructi
 | `answer` | Search + synthesis prompt with inline citations |
 | `context_search` | Token-budget-aware snippet packing for agents |
 | `code_search` | Search GitHub + Stack Overflow for code snippets |
+| `smart_search` | Hybrid: compact IR overview + full details for top N (saves 50-70% tokens) |
 
 ### Streaming & Research
 | Tool | Description |

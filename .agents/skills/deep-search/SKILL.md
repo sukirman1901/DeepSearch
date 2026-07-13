@@ -15,7 +15,7 @@ Use this skill when:
 - User wants to build entity lists with enrichment
 - User wants persistent monitoring for topics
 
-## Available Tools (28)
+## Available Tools (29)
 
 ### Core Search
 
@@ -84,6 +84,13 @@ Search for code snippets from GitHub and Stack Overflow.
 - `max_results`: Max snippets to return (default 10)
 - `language`: Filter by programming language
 - `tokens_target`: Target token count (default 5000)
+
+#### `smart_search(query, top_full, num_results, max_overview_tokens)`
+Hybrid search: compact IR overview + full details for top N. Saves 50-70% tokens.
+- `query`: Search query
+- `top_full`: Number of top results to get full content for (default 3)
+- `num_results`: Total results to consider (default 10)
+- `max_overview_tokens`: Max tokens for overview section (default 500)
 
 ### Streaming & Research
 

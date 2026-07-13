@@ -1,11 +1,11 @@
 # Deep Search Engine MCP Server
 
-> **Free, Open-Source Search Engine MCP Server** — 7 sources, 28 tools, semantic search via ChromaDB, zero cost.
+> **Free, Open-Source Search Engine MCP Server** — 7 sources, 29 tools, semantic search via ChromaDB, zero cost.
 
 ## Features
 
 - **7 Data Sources**: Web, Reddit, YouTube, GitHub, Twitter/X, DuckDuckGo, Wikipedia
-- **28 MCP Tools**: Search, answer, context, streaming, research, monitors, websets, and more
+- **29 MCP Tools**: Search, answer, context, streaming, research, monitors, websets, smart search, and more
 - **Semantic Search**: ChromaDB + sentence-transformers (all-MiniLM-L6-v2)
 - **100% Free**: No API keys, no subscriptions, no paid APIs
 - **MCP Standard**: Works with Claude, Cursor, OpenCode, and other AI clients
@@ -69,6 +69,7 @@ pip install -r mcp/requirements.txt
 | `answer` | Search + synthesis prompt with inline citations |
 | `context_search` | Token-budget-aware snippet packing for agents |
 | `code_search` | Search GitHub + Stack Overflow for code snippets |
+| `smart_search` | Hybrid: compact IR overview + full details for top N (saves 50-70% tokens) |
 
 ### Streaming & Research
 | Tool | Description |
