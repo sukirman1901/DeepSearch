@@ -8,6 +8,8 @@ Use this skill when:
 - User wants to mine information from social media or web
 - User wants to find leads, companies, people, or research papers
 - User wants structured output (JSON, Markdown, CSV)
+- User needs code snippets or programming examples
+- User wants fresh content with caching control
 
 ## Available Tools
 
@@ -42,6 +44,16 @@ Real-time search without using the database.
 - `query`: Search query
 - `source`: Source to search (duckduckgo, reddit, etc.) - optional
 
+### Code Context Tools
+
+#### `code_search(query, max_results, language, tokens_target)`
+Search for code snippets from GitHub and Stack Overflow.
+Inspired by Exa's Context API for coding agents.
+- `query`: Code search query (e.g., "React hooks state management")
+- `max_results`: Max snippets to return (default 10)
+- `language`: Filter by programming language (e.g., "python", "javascript")
+- `tokens_target`: Target token count for response (default 5000)
+
 ### Lead Generation Tools
 
 #### `search_leads(query, limit, industries, roles, technologies, locations, keywords)`
@@ -71,8 +83,15 @@ Crawl and index a topic with optional category and source filtering.
 - `category`: Category hint (auto, company, people, etc.) - default auto
 - `sources`: Specific sources to crawl (optional, default all)
 
-#### `web_crawl(url)`
-Crawl a specific URL and add to index.
+#### `web_crawl(url, max_age_hours, livecrawl_timeout)`
+Crawl a specific URL and add to index with caching control.
+- `url`: URL to crawl
+- `max_age_hours`: Cache freshness control (default -1)
+  - `24`: Use cache if <24 hours old
+  - `1`: Use cache if <1 hour old
+  - `0`: Always livecrawl
+  - `-1`: Cache only
+- `livecrawl_timeout`: Timeout in ms for livecrawl (default 10000)
 
 ### Utility Tools
 
@@ -80,7 +99,19 @@ Crawl a specific URL and add to index.
 List all available data sources.
 
 #### `db_stats()`
-Get database statistics.
+Get database and cache statistics.
+
+## Livecrawling (Content Freshness)
+
+Control how fresh content should be with `max_age_hours` parameter:
+
+| Value | Behavior | Best For |
+|-------|----------|----------|
+| `24` | Use cache if <24 hours old, otherwise livecrawl | Daily-fresh content |
+| `1` | Use cache if <1 hour old, otherwise livecrawl | Near real-time data |
+| `0` | Always livecrawl (ignore cache) | Real-time data |
+| `-1` | Never livecrawl (cache only) | Static/historical content |
+| *(omit)* | Default behavior | Balanced speed and freshness |
 
 ## Categories
 
@@ -102,6 +133,10 @@ Get database statistics.
 2. `deep_search` - semantic search for relevant content
 3. Review and summarize findings
 
+### Code Search
+1. `code_search` - find code snippets from GitHub/Stack Overflow
+2. Review code examples and documentation
+
 ### Company Research
 1. `detect_query_category` - confirm category is "company"
 2. `search_leads` with ICP filters
@@ -119,6 +154,10 @@ Get database statistics.
 ### Specific URL Research
 1. `web_crawl` - crawl and index the URL
 2. `deep_search` - search for related content
+
+### Fresh Content
+1. `web_crawl` with `max_age_hours=1` for near real-time
+2. `web_crawl` with `max_age_hours=0` for real-time
 
 ## Token Isolation Pattern
 
@@ -139,7 +178,8 @@ async def search_with_isolation(query: str, category: str = "general"):
 - Web: General web crawling
 - Reddit: Posts and discussions
 - YouTube: Videos and metadata
-- GitHub: Repositories
+- GitHub: Repositories + Code search
+- Stack Overflow: Code answers
 - Twitter: Tweets via Nitter
 - DuckDuckGo: Search results
 - Wikipedia: Articles
@@ -148,8 +188,10 @@ async def search_with_isolation(query: str, category: str = "general"):
 - Use `detect_query_category` to auto-categorize queries
 - Use `advanced_search` for precise filtering by domain, date, or text
 - Use `search_leads` with ICP for B2B lead generation
+- Use `code_search` with `language` filter for specific programming languages
 - For deep research, use `index_topic` first, then `deep_search`
 - For quick answers, use `quick_search`
+- For fresh content, use `web_crawl` with `max_age_hours=0` or `1`
 - AI validates results - don't just trust crawler output
 - Combine multiple sources for comprehensive understanding
 - Use `format_type="json"` for structured data integration

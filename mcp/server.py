@@ -5,6 +5,8 @@ from mcp.server.fastmcp import FastMCP
 from search.engine import SearchEngine
 from search.categories import get_category_info, detect_category
 from search.lead_gen import create_icp
+from search.code_context import search_code_context
+from search.livecrawl import livecrawl_manager
 from crawlers.web_crawler import WebCrawler
 
 mcp = FastMCP("DeepSearchEngine")
@@ -121,6 +123,33 @@ async def advanced_search(
     return output
 
 
+# --- Code Context Tools ---
+
+@mcp.tool()
+def code_search(
+    query: str,
+    max_results: int = 10,
+    language: str = "",
+    tokens_target: int = 5000,
+) -> str:
+    """
+    Search for code snippets from GitHub and Stack Overflow.
+    Inspired by Exa's Context API for coding agents.
+
+    Args:
+        query: Code search query (e.g., "React hooks state management")
+        max_results: Maximum snippets to return (default 10)
+        language: Filter by programming language (e.g., "python", "javascript")
+        tokens_target: Target token count for response (default 5000)
+    """
+    result = search_code_context(query, max_results, language, tokens_target)
+
+    if not result.snippets:
+        return "No code snippets found."
+
+    return result.formatted_response
+
+
 # --- Lead Generation Tools ---
 
 @mcp.tool()
@@ -217,14 +246,24 @@ async def index_topic(
 
 
 @mcp.tool()
-async def web_crawl(url: str) -> str:
+async def web_crawl(
+    url: str,
+    max_age_hours: int = -1,
+    livecrawl_timeout: int = 10000,
+) -> str:
     """
-    Crawl a specific URL and add to index.
+    Crawl a specific URL and add to index with caching control.
 
     Args:
         url: URL to crawl
+        max_age_hours: Cache freshness control
+            - 24: Use cache if <24 hours old
+            - 1: Use cache if <1 hour old
+            - 0: Always livecrawl
+            - -1: Cache only (default)
+        livecrawl_timeout: Timeout in ms for livecrawl (default 10000)
     """
-    results = await web_crawler.crawl(url)
+    results = await web_crawler.crawl(url, max_age_hours=max_age_hours, livecrawl_timeout=livecrawl_timeout)
     if results:
         engine.vector_store.add(results[0])
         return f"Crawled and indexed: {results[0].title}"
@@ -286,10 +325,17 @@ def list_sources() -> str:
 def db_stats() -> str:
     """Get database statistics."""
     stats = engine.stats()
+    cache_stats = livecrawl_manager.get_stats()
     return (
         f"Database stats:\n"
         f"- Total documents: {stats['total_documents']}\n"
-        f"- Sources: {', '.join(stats['sources']) if stats['sources'] else 'none'}"
+        f"- Sources: {', '.join(stats['sources']) if stats['sources'] else 'none'}\n"
+        f"\nCache stats:\n"
+        f"- Size: {cache_stats['size']}\n"
+        f"- Hit rate: {cache_stats['hit_rate']}\n"
+        f"- Hits: {cache_stats['hits']}\n"
+        f"- Misses: {cache_stats['misses']}\n"
+        f"- Livecrawls: {cache_stats['livecrawls']}"
     )
 
 
