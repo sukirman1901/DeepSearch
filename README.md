@@ -1,11 +1,11 @@
 # Deep Search Engine MCP Server
 
-> **Free, Open-Source Search Engine MCP Server** — 7 sources, 31 tools, semantic search via ChromaDB, zero cost.
+> **Free, Open-Source Search Engine MCP Server** — 7 sources, 10 consolidated tools, semantic search via ChromaDB, zero cost.
 
 ## Features
 
 - **7 Data Sources**: Web, Reddit, YouTube, GitHub, Twitter/X, DuckDuckGo, Wikipedia
-- **31 MCP Tools**: Search, answer, context, streaming, research, monitors, websets, smart search, site mapping, content extraction, and more
+- **10 Consolidated Tools**: All features preserved, combined by mode/action parameters
 - **Semantic Search**: ChromaDB + sentence-transformers (all-MiniLM-L6-v2)
 - **100% Free**: No API keys, no subscriptions, no paid APIs
 - **MCP Standard**: Works with Claude, Cursor, OpenCode, and other AI clients
@@ -51,70 +51,66 @@ source .venv/bin/activate
 pip install -r mcp/requirements.txt
 ```
 
-## Available Tools (31)
+## Available Tools (10)
 
-### Core Search
+### `search` — Unified Search (7 modes)
+| Mode | Description | Key Params |
+|------|-------------|------------|
+| `basic` (default) | Semantic search across indexed content | source, limit, category, search_depth, topic, max_age_hours |
+| `advanced` | Search with domain/date/text/source filters | include_domains, exclude_domains, start_date, end_date |
+| `quick` | Real-time search without database (DuckDuckGo) | source |
+| `stream` | Search with streaming batches + timing | sources |
+| `smart` | Compact IR overview + full details (saves 50-70% tokens) | top_full, max_overview_tokens |
+| `code` | Search GitHub + Stack Overflow for code snippets | language, tokens_target |
+| `context` | Token-budget-aware snippet packing | budget_tokens, language |
+
+### `crawl` — Crawl & Extract
+| Mode | Description | Key Params |
+|------|-------------|------------|
+| Single URL | Crawl URL + subpages, index results | url, subpages, subpage_target |
+| Batch | Extract content from multiple URLs | urls, extract_depth, instructions |
+
+### `monitor` — Persistent Monitoring
+| Action | Description |
+|--------|-------------|
+| `create` | Create a monitor for a query |
+| `list` | List all monitors |
+| `run` | Run monitor, returns only NEW results |
+| `delete` | Delete a monitor |
+
+### `webset` — Entity Collection
+| Action | Description |
+|--------|-------------|
+| `create` | Create a named container |
+| `add` | Search and add results |
+| `list` | List all websets |
+| `get` | Get webset with all items |
+| `enrich` | Scrape for emails, social links, tech |
+| `delete` | Delete a webset |
+
+### `info` — Engine Information
+| Type | Description |
+|------|-------------|
+| `categories` | List all search categories |
+| `sources` | List all 7 data sources |
+| `stats` | Database + cache statistics |
+| `detect` | Auto-detect category for a query |
+
+### `research` — Deep Research Sessions
+| Action | Description |
+|--------|-------------|
+| `start` | Start a research session |
+| `followup` | Ask follow-up question |
+| `list` | List all sessions |
+| `delete` | Delete a session |
+
+### Other Tools
 | Tool | Description |
 |------|-------------|
-| `deep_search` | Semantic search with search_depth, topic, max_age filters |
-| `quick_search` | Real-time search without database |
-| `index_topic` | Crawl and index a topic from all 7 sources |
-| `web_crawl` | Crawl a URL with optional subpage discovery |
-| `list_sources` | List all available data sources |
-| `db_stats` | Get database statistics |
-
-### Answer & Context
-| Tool | Description |
-|------|-------------|
-| `answer` | Search + synthesis prompt with inline citations |
-| `context_search` | Token-budget-aware snippet packing for agents |
-| `code_search` | Search GitHub + Stack Overflow for code snippets |
-| `smart_search` | Hybrid: compact IR overview + full details for top N (saves 50-70% tokens) |
-
-### Streaming & Research
-| Tool | Description |
-|------|-------------|
-| `stream_search` | Results grouped by completion order with timing |
-| `start_research` | Deep research session with auto sub-queries |
-| `ask_followup` | Semantic follow-up within research session |
-| `list_sessions` | List all research sessions |
-| `delete_session` | Delete a research session |
-
-### Categories & Filters
-| Tool | Description |
-|------|-------------|
-| `advanced_search` | Filter by date range, language, region, search_depth, topic, max_age |
-| `detect_query_category` | Auto-detect query category |
-| `list_categories` | List all categories with sources |
-
-### Site Mapping & Extraction
-| Tool | Description |
-|------|-------------|
-| `site_map` | Map website structure via BFS crawl with NL instructions |
-| `extract_content` | Batch URL extraction with depth and NL instructions |
-
-### Monitors
-| Tool | Description |
-|------|-------------|
-| `create_monitor` | Create persistent monitoring for a topic |
-| `list_monitors` | List all monitors |
-| `run_monitor` | Run monitor, returns only new results |
-| `delete_monitor` | Delete a monitor |
-
-### Websets
-| Tool | Description |
-|------|-------------|
-| `create_webset` | Create named container for entity lists |
-| `add_to_webset` | Search and add results to a webset |
-| `list_websets` | List all webset containers |
-| `get_webset` | Get webset with all items |
-| `enrich_webset` | Scrape URLs for emails, social links, technologies |
-| `delete_webset` | Delete a webset |
-
-### Lead Generation
-| Tool | Description |
-|------|-------------|
-| `search_leads` | Search + generate Ideal Customer Profile |
+| `answer` | Search + synthesis with inline citations |
+| `search_leads` | Lead generation with ICP scoring |
+| `site_map` | BFS website structure mapping |
+| `index_topic` | Crawl and index a topic |
 
 ## Architecture
 
@@ -125,7 +121,7 @@ DeepSearch/
 │   ├── db/                # ChromaDB + sentence-transformers
 │   ├── search/            # Engine, answer, context, streaming, research, monitors, websets, sitemap, extract
 │   ├── tests/             # 192 tests
-│   ├── server.py          # 31 MCP tools
+│   ├── server.py          # 10 consolidated MCP tools
 │   └── requirements.txt
 ├── skills/                # AI skills
 │   └── using-deep-search/SKILL.md

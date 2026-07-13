@@ -1,6 +1,6 @@
 {
   "name": "deep-search",
-  "description": "Deep Search Engine MCP server: 7 sources, 28 tools, semantic search via ChromaDB, zero cost",
+  "description": "Deep Search Engine MCP server: 7 sources, 10 consolidated tools, semantic search via ChromaDB, zero cost",
   "version": "1.0.0",
   "contextFileName": "GEMINI.md"
 }
