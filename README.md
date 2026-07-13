@@ -1,11 +1,11 @@
 # Deep Search Engine MCP Server
 
-> **Free, Open-Source Search Engine MCP Server** — 7 sources, 29 tools, semantic search via ChromaDB, zero cost.
+> **Free, Open-Source Search Engine MCP Server** — 7 sources, 31 tools, semantic search via ChromaDB, zero cost.
 
 ## Features
 
 - **7 Data Sources**: Web, Reddit, YouTube, GitHub, Twitter/X, DuckDuckGo, Wikipedia
-- **29 MCP Tools**: Search, answer, context, streaming, research, monitors, websets, smart search, and more
+- **31 MCP Tools**: Search, answer, context, streaming, research, monitors, websets, smart search, site mapping, content extraction, and more
 - **Semantic Search**: ChromaDB + sentence-transformers (all-MiniLM-L6-v2)
 - **100% Free**: No API keys, no subscriptions, no paid APIs
 - **MCP Standard**: Works with Claude, Cursor, OpenCode, and other AI clients
@@ -51,12 +51,12 @@ source .venv/bin/activate
 pip install -r mcp/requirements.txt
 ```
 
-## Available Tools (28)
+## Available Tools (31)
 
 ### Core Search
 | Tool | Description |
 |------|-------------|
-| `deep_search` | Semantic search across indexed content |
+| `deep_search` | Semantic search with search_depth, topic, max_age filters |
 | `quick_search` | Real-time search without database |
 | `index_topic` | Crawl and index a topic from all 7 sources |
 | `web_crawl` | Crawl a URL with optional subpage discovery |
@@ -83,9 +83,15 @@ pip install -r mcp/requirements.txt
 ### Categories & Filters
 | Tool | Description |
 |------|-------------|
-| `advanced_search` | Filter by date range, language, region |
+| `advanced_search` | Filter by date range, language, region, search_depth, topic, max_age |
 | `detect_query_category` | Auto-detect query category |
 | `list_categories` | List all categories with sources |
+
+### Site Mapping & Extraction
+| Tool | Description |
+|------|-------------|
+| `site_map` | Map website structure via BFS crawl with NL instructions |
+| `extract_content` | Batch URL extraction with depth and NL instructions |
 
 ### Monitors
 | Tool | Description |
@@ -117,9 +123,9 @@ DeepSearch/
 ├── mcp/                    # MCP server implementation
 │   ├── crawlers/           # 7 specialized crawlers + subpage discovery
 │   ├── db/                # ChromaDB + sentence-transformers
-│   ├── search/            # Engine, answer, context, streaming, research, monitors, websets
-│   ├── tests/             # 140 tests
-│   ├── server.py          # 28 MCP tools
+│   ├── search/            # Engine, answer, context, streaming, research, monitors, websets, sitemap, extract
+│   ├── tests/             # 192 tests
+│   ├── server.py          # 31 MCP tools
 │   └── requirements.txt
 ├── skills/                # AI skills
 │   └── using-deep-search/SKILL.md

@@ -2,7 +2,7 @@
 
 ## If You Are an AI Agent
 
-This plugin provides a Deep Search Engine MCP server with 7 data sources, 29 tools, and semantic search capabilities via ChromaDB.
+This plugin provides a Deep Search Engine MCP server with 7 data sources, 31 tools, and semantic search capabilities via ChromaDB.
 
 ## MCP Server Setup
 
@@ -42,12 +42,12 @@ python server.py
 
 Expected: Server starts without errors.
 
-## Available Tools (28)
+## Available Tools (31)
 
 ### Core Search
 | Tool | Description |
 |------|-------------|
-| `deep_search` | Semantic search across indexed content |
+| `deep_search` | Semantic search with search_depth, topic, max_age filters |
 | `quick_search` | Real-time search without database |
 | `index_topic` | Crawl and index a topic from all 7 sources |
 | `web_crawl` | Crawl a URL with optional subpage discovery |
@@ -74,9 +74,15 @@ Expected: Server starts without errors.
 ### Categories & Filters
 | Tool | Description |
 |------|-------------|
-| `advanced_search` | Filter by date range, language, region |
+| `advanced_search` | Filter by date range, language, region, search_depth, topic, max_age |
 | `detect_query_category` | Auto-detect query category |
 | `list_categories` | List all categories with sources |
+
+### Site Mapping & Extraction
+| Tool | Description |
+|------|-------------|
+| `site_map` | Map website structure via BFS crawl with NL instructions |
+| `extract_content` | Batch URL extraction with depth and NL instructions |
 
 ### Monitors
 | Tool | Description |
@@ -125,6 +131,16 @@ Expected: Server starts without errors.
 ### Token-Budget Search (for coding agents)
 1. `context_search` - search with token budget limit
 2. Inject results into context window
+
+### Site Mapping
+1. `site_map` - map website structure with BFS crawl
+2. Use `instructions` to filter pages (e.g., "blog posts only")
+3. Review structure and optionally `web_crawl` specific pages
+
+### Content Extraction
+1. `extract_content` - batch extract from URLs
+2. Use `extract_depth` for basic text or advanced metadata
+3. Use `instructions` to filter relevant content
 
 ### Entity List Building
 1. `create_webset` - create a named container
