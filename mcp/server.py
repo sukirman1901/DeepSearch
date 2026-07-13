@@ -220,6 +220,18 @@ async def search(
             max_age_hours=max_age_hours,
         )
         if not results:
+            # Auto-fallback: DB empty → live crawl via DuckDuckGo
+            from crawlers.duckduckgo_crawler import DuckDuckGoCrawler
+            crawler = DuckDuckGoCrawler()
+            results = await crawler.crawl(query, max_results=limit)
+            if results:
+                output = f"No indexed results matching filters. Live search via DuckDuckGo:\n\n"
+                for i, result in enumerate(results, 1):
+                    output += f"--- Result {i} ---\n"
+                    output += f"Title: {result.title}\n"
+                    output += f"Content: {result.content[:500]}...\n"
+                    output += f"URL: {result.url}\n\n"
+                return output
             return "No results found matching filters."
         if format_type == "json":
             from search.structured_output import StructuredOutput
@@ -237,13 +249,28 @@ async def search(
     if category == "auto":
         category = engine.detect_query_category(query)
     if format_type in ("json", "markdown"):
-        return engine.search_and_format(query, limit, format_type, category)
+        output = engine.search_and_format(query, limit, format_type, category)
+        if "No results" not in output:
+            return output
     results = engine.search(
         query, limit, source, category=category,
         search_depth=search_depth, topic=topic, max_age_hours=max_age_hours,
     )
     if not results:
-        return "No results found. Try indexing a topic first with index_topic."
+        # Auto-fallback: DB empty → live crawl via DuckDuckGo
+        from crawlers.duckduckgo_crawler import DuckDuckGoCrawler
+        crawler = DuckDuckGoCrawler()
+        results = await crawler.crawl(query, max_results=limit)
+        if results:
+            source_label = "DuckDuckGo (live)"
+            output = f"No indexed results. Live search via {source_label}:\n\n"
+            for i, result in enumerate(results, 1):
+                output += f"--- Result {i} ---\n"
+                output += f"Title: {result.title}\n"
+                output += f"Content: {result.content[:500]}...\n"
+                output += f"URL: {result.url}\n\n"
+            return output
+        return "No results found."
     output = f"Found {len(results)} results for '{query}':\n\n"
     for i, result in enumerate(results, 1):
         output += f"--- Result {i} (Source: {result.source}) ---\n"
