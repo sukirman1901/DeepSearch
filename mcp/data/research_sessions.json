@@ -1,0 +1,30 @@
+{
+  "sessions": {
+    "f747f3de": {
+      "query": "kesenjangan Bojonegoro saat ini sosial ekonomi",
+      "sources": [],
+      "created_at": "2026-07-14T00:49:01.279790",
+      "result_count": 1,
+      "followup_count": 0,
+      "sub_queries": [
+        "kesenjangan Bojonegoro saat ini sosial ekonomi"
+      ]
+    },
+    "794ad9f3": {
+      "query": "Bojonegoro Jawa Timur Indonesia terkini 2026 berita informasi",
+      "sources": [
+        "web",
+        "reddit",
+        "youtube",
+        "github",
+        "twitter"
+      ],
+      "created_at": "2026-07-14T01:38:19.559626",
+      "result_count": 1,
+      "followup_count": 0,
+      "sub_queries": [
+        "Bojonegoro Jawa Timur Indonesia terkini 2026 berita informasi"
+      ]
+    }
+  }
+}

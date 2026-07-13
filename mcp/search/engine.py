@@ -51,6 +51,28 @@ class SearchEngine:
 
         return len(results)
 
+    async def index_topic_with_details(
+        self,
+        topic: str,
+        max_results_per_source: int = 10,
+        category: str = "auto",
+        sources: list[str] = None,
+    ) -> dict:
+        """Index a topic and return detailed breakdown by source."""
+        results = await self.crawler_manager.crawl_all(
+            topic, max_results_per_source, category, sources
+        )
+
+        by_source = {}
+        for result in results:
+            by_source[result.source] = by_source.get(result.source, 0) + 1
+            self.vector_store.add(result)
+
+        return {
+            "total": len(results),
+            "by_source": by_source,
+        }
+
     def search(
         self,
         query: str,

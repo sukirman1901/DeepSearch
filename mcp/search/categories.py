@@ -38,7 +38,7 @@ CATEGORY_CONFIGS: dict[Category, CategoryConfig] = {
     Category.COMPANY: CategoryConfig(
         name="Company Research",
         description="Company profiles, competitors, funding, news",
-        sources=["duckduckgo", "twitter", "reddit"],
+        sources=["web", "duckduckgo", "twitter", "reddit"],
         keywords=["company", "startup", "funding", "acquisition", "IPO", "revenue", "competitor"],
         exclude_sources=["youtube", "github"]
     ),

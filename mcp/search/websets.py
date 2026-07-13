@@ -272,21 +272,28 @@ class WebsetManager:
                 return item
         return None
 
-    async def enrich_all(self, container_id: str) -> int:
-        """Enrich all un-enriched items. Returns count enriched."""
+    async def enrich_all(self, container_id: str, progress_callback=None) -> dict:
+        """Enrich all un-enriched items. Returns dict with count and details."""
         container = self.containers.get(container_id)
         if not container:
-            return 0
+            return {"count": 0, "items": []}
 
-        count = 0
+        results = []
         for item in container.items:
             if not item.enriched and item.url:
+                if progress_callback:
+                    progress_callback(f"Enriching: {item.title[:50]}...")
                 props = self.enricher.enrich(item.url)
                 item.properties.update(props)
                 item.enriched = True
-                count += 1
+                results.append({
+                    "item_id": item.id,
+                    "title": item.title,
+                    "url": item.url,
+                    "props": list(props.keys()),
+                })
 
-        if count:
+        if results:
             container.updated_at = datetime.now().isoformat()
             self._save()
-        return count
+        return {"count": len(results), "items": results}

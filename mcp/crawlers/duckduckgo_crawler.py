@@ -18,12 +18,11 @@ class DuckDuckGoCrawler(BaseCrawler):
     async def crawl(self, query: str, max_results: int = 10) -> list[CrawlResult]:
         try:
             async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
-                response = client.post(
+                resp = await client.post(
                     self.SEARCH_URL,
                     data={"q": query},
                     headers={"User-Agent": self.USER_AGENT},
                 )
-                resp = await response
 
             if resp.status_code != 200:
                 return []

@@ -1,5 +1,6 @@
 """Site mapping via BFS crawl with depth control and natural language instructions."""
 import httpx
+import re
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 from dataclasses import dataclass, field
@@ -114,15 +115,21 @@ class SiteMapper:
         """Parse natural language instructions into keywords."""
         if not instructions:
             return []
-        # Simple keyword extraction: split by spaces, filter short words
+        # Remove common stop words
+        stop_words = {"just", "the", "and", "or", "for", "to", "in", "a", "an", "of", "with", "on", "at", "from", "by"}
         words = instructions.lower().split()
-        return [w for w in words if len(w) > 2]
+        return [w for w in words if len(w) > 2 and w not in stop_words]
 
     def _matches_instructions(
         self, url: str, title: str, content: str, keywords: list[str]
     ) -> bool:
-        """Check if page matches instruction keywords."""
+        """Check if page matches instruction keywords using word boundaries."""
         if not keywords:
             return True  # No filter = match all
         text = f"{url} {title} {content[:2000]}".lower()
-        return any(kw in text for kw in keywords)
+        for kw in keywords:
+            # Use word boundary matching for better precision
+            pattern = r'\b' + re.escape(kw) + r'\b'
+            if re.search(pattern, text):
+                return True
+        return False

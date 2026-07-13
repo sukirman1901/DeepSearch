@@ -138,8 +138,8 @@ class TestEnricher:
         manager.enricher.enrich = MagicMock(return_value={"page_title": "Test"})
         manager.add_item(container.id, "A", "https://a.com")
         manager.add_item(container.id, "B", "https://b.com")
-        count = await manager.enrich_all(container.id)
-        assert count == 2
+        result = await manager.enrich_all(container.id)
+        assert result["count"] == 2
         items = manager.list_items(container.id)
         assert all(i["enriched"] for i in items)
 

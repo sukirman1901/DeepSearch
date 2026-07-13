@@ -86,7 +86,7 @@ class KnowledgeCompiler:
         """Generate 1-line summary from content (~15 words)."""
         content = result.content or ""
         if not content:
-            return result.description if hasattr(result, "description") else ""
+            return ""
 
         # Take first sentence or first 100 chars
         first_sentence = content.split(". ")[0] if ". " in content else content[:100]
@@ -191,7 +191,27 @@ class SmartSearchEngine:
                 seen.add(r.url)
                 deduped.append(r)
 
-        # 4. Sort by score
+        # 4. Fallback: if still no results, try DDG directly
+        if not deduped:
+            from crawlers.duckduckgo_crawler import DuckDuckGoCrawler
+            ddg = DuckDuckGoCrawler()
+            fallback = await ddg.crawl(query, max_results=num_results)
+            if fallback:
+                for r in fallback:
+                    self.vector_store.add(r)
+                deduped = fallback
+
+        if not deduped:
+            return SmartSearchResult(
+                query=query,
+                total_results=0,
+                details_count=0,
+                tokens_overview=0,
+                tokens_details=0,
+                tokens_saved_pct=0.0,
+            )
+
+        # 5. Sort by score
         deduped.sort(key=lambda r: r.score or 0, reverse=True)
         deduped = deduped[:num_results]
 

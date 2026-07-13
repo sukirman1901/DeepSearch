@@ -18,6 +18,7 @@ class ContextSnippet:
     source: str
     language: str = ""
     tokens: int = 0
+    score: float = 0.0  # Relevance score from CrawlResult
 
 
 @dataclass
@@ -64,9 +65,11 @@ class ContextEngine:
                 source=r.source or "",
                 language=r.metadata.get("language", "") if r.metadata else "",
                 tokens=tokens,
+                score=r.score or 0.0,
             ))
 
-        candidates.sort(key=lambda s: s.tokens, reverse=True)
+        # Sort by relevance score (highest first), then by tokens (smallest first) as tiebreaker
+        candidates.sort(key=lambda s: (-s.score, s.tokens))
 
         packed = []
         used = 0
@@ -144,6 +147,16 @@ class ContextEngine:
                 if (r.metadata or {}).get("language", "").lower() == language.lower()
                 or language.lower() in (r.title or "").lower()
             ]
+
+        # Fallback: if no results, try DDG directly
+        if not deduped:
+            from crawlers.duckduckgo_crawler import DuckDuckGoCrawler
+            ddg = DuckDuckGoCrawler()
+            fallback = await ddg.crawl(query, max_results=num_results)
+            if fallback:
+                for r in fallback:
+                    self.vector_store.add(r)
+                deduped = fallback
 
         # 5. Pack
         packed, tokens_used = self.pack_snippets(deduped, budget_tokens)

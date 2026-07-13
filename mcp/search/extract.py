@@ -13,6 +13,8 @@ class ExtractedContent:
     text: str = ""
     links: list[str] = field(default_factory=list)
     metadata: dict = field(default_factory=dict)
+    error: str = ""
+    error: str = ""  # Error message if extraction failed
 
 
 @dataclass
@@ -50,17 +52,21 @@ class ContentExtractor:
         """
         contents = []
         instruction_keywords = self._parse_instructions(instructions)
+        successful = 0
 
         for url in urls:
             try:
                 content = self._extract_single(url, extract_depth, instruction_keywords)
                 if content:
                     contents.append(content)
-            except Exception:
-                continue
+                    successful += 1
+                else:
+                    contents.append(ExtractedContent(url=url, error="No content extracted"))
+            except Exception as e:
+                contents.append(ExtractedContent(url=url, error=str(e)[:200]))
 
         return ExtractOutput(
-            urls_processed=len(contents),
+            urls_processed=successful,
             contents=contents,
             extract_depth=extract_depth,
             instructions=instructions,

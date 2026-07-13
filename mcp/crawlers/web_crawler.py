@@ -136,64 +136,65 @@ class WebCrawler(BaseCrawler):
         ua = _get_user_agent(attempt)
 
         try:
-            response = httpx.get(
-                url,
-                headers={
-                    "User-Agent": ua,
-                    "Accept": "text/markdown;q=1.0, text/plain;q=0.8, text/html;q=0.7, */*;q=0.1",
-                    "Accept-Language": "en-US,en;q=0.9",
-                },
-                follow_redirects=True,
-                timeout=timeout_seconds,
-            )
-
-            # --- Cloudflare bypass (from webfetch.ts isCloudflareChallenge pattern) ---
-            if _is_cloudflare_challenge(response) and attempt < max_retries:
-                return await self._fetch_with_retry(
-                    url, timeout_seconds, attempt + 1, max_retries
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    url,
+                    headers={
+                        "User-Agent": ua,
+                        "Accept": "text/markdown;q=1.0, text/plain;q=0.8, text/html;q=0.7, */*;q=0.1",
+                        "Accept-Language": "en-US,en;q=0.9",
+                    },
+                    follow_redirects=True,
+                    timeout=timeout_seconds,
                 )
 
-            response.raise_for_status()
+                # --- Cloudflare bypass (from webfetch.ts isCloudflareChallenge pattern) ---
+                if _is_cloudflare_challenge(response) and attempt < max_retries:
+                    return await self._fetch_with_retry(
+                        url, timeout_seconds, attempt + 1, max_retries
+                    )
 
-            # --- Content-type validation (from webfetch.ts isTextualMime pattern) ---
-            content_type = response.headers.get("content-type", "")
-            if not _is_textual_content(content_type):
-                return CrawlResult(
+                response.raise_for_status()
+
+                # --- Content-type validation (from webfetch.ts isTextualMime pattern) ---
+                content_type = response.headers.get("content-type", "")
+                if not _is_textual_content(content_type):
+                    return CrawlResult(
+                        source="web",
+                        title=url,
+                        content=f"Unsupported content type: {content_type}",
+                        url=url,
+                        metadata={"status_code": response.status_code, "content_type": content_type},
+                    )
+
+                # --- Response size limit (from webfetch.ts MAX_RESPONSE_BYTES) ---
+                content_bytes = response.content[:MAX_RESPONSE_BYTES]
+                html = content_bytes.decode("utf-8", errors="ignore")
+
+                # --- Parse title ---
+                soup = BeautifulSoup(html, "html.parser")
+                title = soup.title.string.strip() if soup.title and soup.title.string else url
+
+                # --- Convert to markdown (from webfetch.ts convertHTMLToMarkdown pattern) ---
+                markdown = _html_to_markdown(html)
+
+                # --- Fallback: plain text extraction if markdown is poor ---
+                if len(markdown.strip()) < 50:
+                    markdown = _extract_text(html)
+
+                result = CrawlResult(
                     source="web",
-                    title=url,
-                    content=f"Unsupported content type: {content_type}",
+                    title=title,
+                    content=markdown[:MAX_CONTENT_LENGTH],
                     url=url,
-                    metadata={"status_code": response.status_code, "content_type": content_type},
+                    metadata={
+                        "status_code": response.status_code,
+                        "content_type": content_type,
+                        "format": "markdown",
+                        "user_agent": ua,
+                    },
                 )
-
-            # --- Response size limit (from webfetch.ts MAX_RESPONSE_BYTES) ---
-            content_bytes = response.content[:MAX_RESPONSE_BYTES]
-            html = content_bytes.decode("utf-8", errors="ignore")
-
-            # --- Parse title ---
-            soup = BeautifulSoup(html, "html.parser")
-            title = soup.title.string.strip() if soup.title and soup.title.string else url
-
-            # --- Convert to markdown (from webfetch.ts convertHTMLToMarkdown pattern) ---
-            markdown = _html_to_markdown(html)
-
-            # --- Fallback: plain text extraction if markdown is poor ---
-            if len(markdown.strip()) < 50:
-                markdown = _extract_text(html)
-
-            result = CrawlResult(
-                source="web",
-                title=title,
-                content=markdown[:MAX_CONTENT_LENGTH],
-                url=url,
-                metadata={
-                    "status_code": response.status_code,
-                    "content_type": content_type,
-                    "format": "markdown",
-                    "user_agent": ua,
-                },
-            )
-            return result
+                return result
 
         except Exception as e:
             return CrawlResult(

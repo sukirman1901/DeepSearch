@@ -9,6 +9,12 @@ import json
 import re
 
 
+def _word_match(text: str, keyword: str) -> bool:
+    """Check if keyword appears as a whole word in text."""
+    pattern = r'\b' + re.escape(keyword.lower()) + r'\b'
+    return bool(re.search(pattern, text))
+
+
 @dataclass
 class IdealCustomerProfile:
     """Ideal Customer Profile for lead scoring"""
@@ -51,45 +57,45 @@ class LeadScorer:
         combined_text = f"{result.title} {result.content}".lower()
         metadata = {k: str(v).lower() for k, v in result.metadata.items()}
 
-        # Industry match (25 points)
+        # Industry match (25 points) - word boundary matching
         if self.icp.industries:
             for industry in self.icp.industries:
-                if industry.lower() in combined_text:
+                if _word_match(combined_text, industry):
                     score += 25
                     reasons.append(f"Industry match: {industry}")
                     break
 
-        # Role match (20 points)
+        # Role match (20 points) - word boundary matching
         if self.icp.roles:
             for role in self.icp.roles:
-                if role.lower() in combined_text or role.lower() in metadata.get("title", ""):
+                if _word_match(combined_text, role) or _word_match(metadata.get("title", ""), role):
                     score += 20
                     reasons.append(f"Role match: {role}")
                     break
 
-        # Technology match (20 points)
+        # Technology match (20 points) - word boundary matching
         if self.icp.technologies:
-            tech_matches = [t for t in self.icp.technologies if t.lower() in combined_text]
+            tech_matches = [t for t in self.icp.technologies if _word_match(combined_text, t)]
             if tech_matches:
                 score += 20
                 reasons.append(f"Technology match: {', '.join(tech_matches)}")
 
-        # Location match (10 points)
+        # Location match (10 points) - word boundary matching
         if self.icp.locations:
             for location in self.icp.locations:
-                if location.lower() in combined_text:
+                if _word_match(combined_text, location):
                     score += 10
                     reasons.append(f"Location match: {location}")
                     break
 
-        # Keyword match (15 points)
+        # Keyword match (15 points) - word boundary matching
         if self.icp.keywords:
-            keyword_matches = [k for k in self.icp.keywords if k.lower() in combined_text]
+            keyword_matches = [k for k in self.icp.keywords if _word_match(combined_text, k)]
             if keyword_matches:
                 score += min(15, len(keyword_matches) * 5)
                 reasons.append(f"Keyword matches: {', '.join(keyword_matches[:3])}")
 
-        # Company size match (10 points)
+        # Company size match (10 points) - word boundary matching
         if self.icp.company_sizes:
             for size in self.icp.company_sizes:
                 if size.lower() in combined_text:

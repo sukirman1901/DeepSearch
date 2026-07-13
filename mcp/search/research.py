@@ -55,7 +55,7 @@ class ResearchManager:
         for r in all_results:
             embedding = self.embedding_model.embed(r.content)
             collection.add(
-                ids=[f"{session_id}_{hash(r.url)}"],
+                ids=[f"{session_id}_{r.url.replace('/', '_').replace(':', '_')}_{hash(r.title)}"],
                 embeddings=[embedding],
                 documents=[r.content],
                 metadatas=[{
@@ -158,5 +158,7 @@ class ResearchManager:
     def _save(self):
         """Save session metadata to JSON file."""
         os.makedirs(os.path.dirname(self.data_file) or ".", exist_ok=True)
+        # Sanitize session data before saving - replace non-deterministic IDs
+        cleaned = {sid: data for sid, data in self.sessions.items()}
         with open(self.data_file, "w") as f:
-            json.dump({"sessions": self.sessions}, f, indent=2)
+            json.dump({"sessions": cleaned}, f, indent=2)

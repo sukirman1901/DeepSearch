@@ -124,15 +124,25 @@ async def search(
     # --- QUICK MODE ---
     if mode == "quick":
         from crawlers.duckduckgo_crawler import DuckDuckGoCrawler
+        from crawlers.youtube_crawler import YouTubeCrawler
+        from crawlers.github_crawler import GitHubCrawler
+        from crawlers.wikipedia_crawler import WikipediaCrawler
         src = source or "duckduckgo"
-        crawler_map = {"duckduckgo": DuckDuckGoCrawler}
+        crawler_map = {
+            "duckduckgo": DuckDuckGoCrawler,
+            "youtube": YouTubeCrawler,
+            "github": GitHubCrawler,
+            "wikipedia": WikipediaCrawler,
+        }
         if src not in crawler_map:
-            return f"Source '{src}' not available for quick search."
+            available = ", ".join(crawler_map.keys())
+            return f"Source '{src}' not available. Available: {available}"
         crawler = crawler_map[src]()
         results = await crawler.crawl(query, max_results=5)
         if not results:
-            return "No results found."
-        output = f"Quick search results for '{query}':\n\n"
+            return f"Quick search for '{query}' returned no results."
+        source_name = src.capitalize() + " Quick Search"
+        output = f"{source_name} results for '{query}':\n\n"
         for i, result in enumerate(results, 1):
             output += f"{i}. {result.title}\n   {result.url}\n   {result.content[:200]}...\n\n"
         return output
@@ -228,6 +238,8 @@ async def search(
     if mode == "advanced":
         if category == "auto":
             category = engine.detect_query_category(query)
+        has_filters = any([include_domains, exclude_domains, start_date, end_date,
+                          include_text, exclude_text, include_sources, exclude_sources])
         results = engine.search_with_filters(
             query=query,
             limit=limit,
@@ -246,18 +258,22 @@ async def search(
             max_age_hours=max_age_hours,
         )
         if not results:
-            # Auto-fallback: DB empty → live crawl via DuckDuckGo
-            from crawlers.duckduckgo_crawler import DuckDuckGoCrawler
-            crawler = DuckDuckGoCrawler()
-            results = await crawler.crawl(query, max_results=limit)
-            if results:
-                output = f"No indexed results matching filters. Live search via DuckDuckGo:\n\n"
-                for i, result in enumerate(results, 1):
-                    output += f"--- Result {i} ---\n"
-                    output += f"Title: {result.title}\n"
-                    output += f"Content: {result.content[:500]}...\n"
-                    output += f"URL: {result.url}\n\n"
-                return output
+            # Auto-fallback: only when no active filters
+            if not has_filters:
+                from crawlers.duckduckgo_crawler import DuckDuckGoCrawler
+                crawler = DuckDuckGoCrawler()
+                results = await crawler.crawl(query, max_results=limit)
+                if results:
+                    # Index fallback results
+                    for r in results:
+                        engine.vector_store.add(r)
+                    output = f"No indexed results. Live search via DuckDuckGo:\n\n"
+                    for i, result in enumerate(results, 1):
+                        output += f"--- Result {i} ---\n"
+                        output += f"Title: {result.title}\n"
+                        output += f"Content: {result.content[:500]}...\n"
+                        output += f"URL: {result.url}\n\n"
+                    return output
             return "No results found matching filters."
         if format_type == "json":
             from search.structured_output import StructuredOutput
@@ -288,6 +304,9 @@ async def search(
         crawler = DuckDuckGoCrawler()
         results = await crawler.crawl(query, max_results=limit)
         if results:
+            # Index fallback results so next search finds them
+            for r in results:
+                engine.vector_store.add(r)
             source_label = "DuckDuckGo (live)"
             output = f"No indexed results. Live search via {source_label}:\n\n"
             for i, result in enumerate(results, 1):
@@ -357,11 +376,14 @@ async def crawl(
         for content in result.contents:
             lines.append(f"--- {content.title or content.url} ---")
             lines.append(f"URL: {content.url}")
-            lines.append(f"Text: {content.text[:500]}...")
-            if content.links:
-                lines.append(f"Links: {len(content.links)} found")
-            if content.metadata:
-                lines.append(f"Metadata: {len(content.metadata)} fields")
+            if content.error:
+                lines.append(f"Error: {content.error}")
+            else:
+                lines.append(f"Text: {content.text[:500]}...")
+                if content.links:
+                    lines.append(f"Links: {len(content.links)} found")
+                if content.metadata:
+                    lines.append(f"Metadata: {len(content.metadata)} fields")
             lines.append("")
         return "\n".join(lines)
 
@@ -437,9 +459,9 @@ async def monitor(
     if action == "run":
         if not monitor_id:
             return "Error: 'monitor_id' is required for run."
+        if monitor_id not in monitor_manager.monitors:
+            return f"Monitor '{monitor_id}' not found. Use monitor(action='list') to see available monitors."
         results = await monitor_manager.run_monitor(monitor_id, engine.crawler_manager)
-        if results is None:
-            return f"Monitor {monitor_id} not found."
         if not results:
             monitors = monitor_manager.list_monitors()
             seen = next((m["seen_count"] for m in monitors if m["id"] == monitor_id), 0)
@@ -543,8 +565,13 @@ async def webset(
         container = webset_manager.get_container(webset_id)
         if not container:
             return f"Webset {webset_id} not found."
-        count = await webset_manager.enrich_all(webset_id)
-        return f"Enriched {count} items in '{container.name}'"
+        result = await webset_manager.enrich_all(webset_id)
+        if result["count"] == 0:
+            return f"No items to enrich in '{container.name}'"
+        lines = [f"Enriched {result['count']} items in '{container.name}':"]
+        for item in result["items"]:
+            lines.append(f"  - {item['title'][:60]} ({len(item['props'])} fields)")
+        return "\n".join(lines)
 
     if action == "delete":
         if not webset_id:
@@ -588,16 +615,41 @@ def info(
         return output
 
     if type == "sources":
-        sources = [
-            "web - General web crawling",
-            "reddit - Reddit posts and discussions",
-            "youtube - YouTube videos and metadata",
-            "github - GitHub repositories",
-            "twitter - Twitter/X posts via Nitter",
-            "duckduckgo - DuckDuckGo search results",
-            "wikipedia - Wikipedia articles",
-        ]
+        from crawlers.manager import CrawlerManager
+        manager = CrawlerManager()
+        sources = []
+        for source_name in manager.crawlers.keys():
+            source_display = source_name.capitalize()
+            if source_name == "duckduckgo":
+                source_display = "DuckDuckGo (search)"
+            elif source_name == "web":
+                source_display = "Web (crawler)"
+            elif source_name == "reddit":
+                source_display = "Reddit (posts)"
+            elif source_name == "youtube":
+                source_display = "YouTube (videos)"
+            elif source_name == "github":
+                source_display = "GitHub (repositories)"
+            elif source_name == "twitter":
+                source_display = "Twitter/X (tweets)"
+            elif source_name == "wikipedia":
+                source_display = "Wikipedia (articles)"
+            sources.append(f"{source_display} - {get_source_description(source_name)}")
         return "Available sources:\n" + "\n".join(f"- {s}" for s in sources)
+
+
+def get_source_description(source_name: str) -> str:
+    """Get human-readable description for a source."""
+    descriptions = {
+        "web": "General web page crawling with markdown extraction",
+        "reddit": "Reddit posts and comments via JSON API",
+        "youtube": "YouTube video search via yt-dlp",
+        "github": "GitHub repository search via API",
+        "twitter": "Twitter/X posts via Nitter instances",
+        "duckduckgo": "DuckDuckGo HTML search results",
+        "wikipedia": "Wikipedia article search via MediaWiki API",
+    }
+    return descriptions.get(source_name, "Search source")
 
     if type == "stats":
         stats = engine.stats()
@@ -875,8 +927,13 @@ async def index_topic(
         category: Category hint (auto, company, people, etc.) - default auto
         sources: Specific sources to crawl (optional, default all)
     """
-    count = await engine.index_topic(topic, max_results_per_source, category, sources)
-    return f"Indexed {count} results for topic '{topic}'."
+    result = await engine.index_topic_with_details(topic, max_results_per_source, category, sources)
+    lines = [f"Indexed {result['total']} results for topic '{topic}':"]
+    for source, count in result['by_source'].items():
+        lines.append(f"  {source}: {count} results")
+    if result['total'] == 0:
+        lines.append("\nNo results found. Try a different topic or check sources.")
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":
