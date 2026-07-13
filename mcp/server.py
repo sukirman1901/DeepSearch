@@ -252,9 +252,11 @@ async def web_crawl(
     url: str,
     max_age_hours: int = -1,
     livecrawl_timeout: int = 10000,
+    subpages: int = 0,
+    subpage_target: str = "",
 ) -> str:
     """
-    Crawl a specific URL and add to index with caching control.
+    Crawl a URL and extract content, optionally crawling subpages.
 
     Args:
         url: URL to crawl
@@ -264,11 +266,25 @@ async def web_crawl(
             - 0: Always livecrawl
             - -1: Cache only (default)
         livecrawl_timeout: Timeout in ms for livecrawl (default 10000)
+        subpages: Number of subpages to also crawl (default 0 = none)
+        subpage_target: Keyword to filter subpages (e.g., "docs", "blog")
     """
-    results = await web_crawler.crawl(url, max_age_hours=max_age_hours, livecrawl_timeout=livecrawl_timeout)
+    results = await web_crawler.crawl(
+        url,
+        max_age_hours=max_age_hours,
+        livecrawl_timeout=livecrawl_timeout,
+        subpages=subpages,
+        subpage_target=subpage_target,
+    )
     if results:
-        engine.vector_store.add(results[0])
-        return f"Crawled and indexed: {results[0].title}"
+        for result in results:
+            engine.vector_store.add(result)
+        if len(results) == 1:
+            return f"Crawled and indexed: {results[0].title}"
+        titles = [r.title for r in results]
+        return f"Crawled and indexed {len(results)} pages:\n" + "\n".join(
+            f"  - {t}" for t in titles
+        )
     return "Failed to crawl URL."
 
 
