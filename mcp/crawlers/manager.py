@@ -86,3 +86,48 @@ class CrawlerManager:
             return await crawler.crawl(query, max_results)
         except Exception:
             return []
+
+    async def crawl_all_streaming(
+        self,
+        query: str,
+        max_results_per_source: int = 10,
+        category: str = "auto",
+        sources: list[str] = None,
+        generate_variations: bool = True,
+    ):
+        """Yield (source_name, results) as each source completes."""
+        if category == "auto":
+            detected = detect_category(query)
+            category = detected.value
+
+        if not sources:
+            cat_enum = Category(category) if category in [c.value for c in Category] else Category.GENERAL
+            sources = get_sources_for_category(cat_enum)
+
+        queries = [query]
+        if generate_variations:
+            variations = self.query_generator.generate_variations(query, category, max_variations=2)
+            queries = variations
+
+        tasks = {}
+        for source_name in sources:
+            if source_name in self.crawlers:
+                crawler = self.crawlers[source_name]
+                for q in queries:
+                    task = asyncio.create_task(
+                        self._crawl_safe(crawler, q, max_results_per_source // len(queries))
+                    )
+                    tasks[task] = source_name
+
+        for completed in asyncio.as_completed(list(tasks.keys())):
+            source_name = tasks[completed]
+            try:
+                results = await completed
+            except Exception:
+                results = []
+
+            for result in results:
+                if result.category == "general":
+                    result.category = category
+
+            yield source_name, results

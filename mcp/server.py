@@ -11,6 +11,7 @@ from search.answer import AnswerEngine
 from search.monitors import MonitorManager
 from search.research import ResearchManager
 from search.context import ContextEngine
+from search.streaming import StreamSearchManager
 from crawlers.web_crawler import WebCrawler
 
 mcp = FastMCP("DeepSearchEngine")
@@ -20,6 +21,7 @@ web_crawler = WebCrawler()
 monitor_manager = MonitorManager()
 research_manager = ResearchManager(engine.vector_store.client, engine.vector_store.embedding_model)
 context_engine = ContextEngine(engine.crawler_manager, engine.vector_store)
+stream_manager = StreamSearchManager(engine.crawler_manager, engine.vector_store)
 
 
 # --- Core Search Tools ---
@@ -504,6 +506,47 @@ async def context_search(
     lines = [result.formatted]
     lines.append(f"\nBudget: {result.tokens_budget:,} tokens | Used: {result.tokens_used:,} | Snippets: {len(result.snippets)} of {result.total_snippets_found} considered")
     return "\n".join(lines)
+
+
+# --- Streaming Search Tool ---
+
+
+@mcp.tool()
+async def stream_search(
+    query: str,
+    num_results: int = 10,
+    sources: str = "",
+) -> str:
+    """
+    Search with streaming — results grouped by completion order.
+
+    Returns JSON with batches showing which source finished first
+    and timing metadata. Faster sources appear earlier.
+
+    Args:
+        query: Search query
+        num_results: Max results per source
+        sources: Comma-separated sources (e.g., "web,github") — empty = all
+    """
+    source_list = [s.strip() for s in sources.split(",") if s.strip()] if sources else None
+    result = await stream_manager.search(query, num_results, source_list)
+    data = {
+        "query": result.query,
+        "total_results": result.total_results,
+        "total_time_ms": result.total_time_ms,
+        "sources_searched": result.sources_searched,
+        "batches": [
+            {
+                "batch": b.batch_number,
+                "source": b.source,
+                "time_ms": b.time_ms,
+                "result_count": b.result_count,
+                "results": b.results,
+            }
+            for b in result.batches
+        ],
+    }
+    return json.dumps(data, indent=2)
 
 
 # --- Research Tools ---
