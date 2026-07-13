@@ -14,15 +14,15 @@
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
-cd mining
+git clone https://github.com/sukirman1901/DeepSearch.git
+cd DeepSearch
 
 # Create virtual environment
 python3.12 -m venv .venv
 source .venv/bin/activate
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -r mcp/requirements.txt
 ```
 
 ## Usage
@@ -36,10 +36,10 @@ Add to your MCP client configuration:
   "mcpServers": {
     "deep-search": {
       "command": "python",
-      "args": ["/path/to/mining/server.py"],
-      "cwd": "/path/to/mining",
+      "args": ["/path/to/DeepSearch/mcp/server.py"],
+      "cwd": "/path/to/DeepSearch/mcp",
       "env": {
-        "PYTHONPATH": "/path/to/mining"
+        "PYTHONPATH": "/path/to/DeepSearch/mcp"
       }
     }
   }
@@ -73,24 +73,29 @@ results = await deep_search("AI", source="reddit")
 ## Architecture
 
 ```
-mining/
-├── crawlers/           # 7 specialized crawlers
-│   ├── base.py        # BaseCrawler ABC
-│   ├── web_crawler.py
-│   ├── reddit_crawler.py
-│   ├── youtube_crawler.py
-│   ├── github_crawler.py
-│   ├── twitter_crawler.py
-│   ├── duckduckgo_crawler.py
-│   ├── wikipedia_crawler.py
-│   └── manager.py     # CrawlerManager
-├── db/                # Database layer
-│   ├── embeddings.py  # SentenceTransformer wrapper
-│   └── vector_store.py # ChromaDB wrapper
-├── search/            # Search engine
-│   └── engine.py      # SearchEngine
-├── server.py          # MCP server
-├── requirements.txt
+DeepSearch/
+├── mcp/                    # MCP server implementation
+│   ├── crawlers/           # 7 specialized crawlers
+│   │   ├── base.py        # BaseCrawler ABC
+│   │   ├── web_crawler.py
+│   │   ├── reddit_crawler.py
+│   │   ├── youtube_crawler.py
+│   │   ├── github_crawler.py
+│   │   ├── twitter_crawler.py
+│   │   ├── duckduckgo_crawler.py
+│   │   ├── wikipedia_crawler.py
+│   │   └── manager.py     # CrawlerManager
+│   ├── db/                # Database layer
+│   │   ├── embeddings.py  # SentenceTransformer wrapper
+│   │   └── vector_store.py # ChromaDB wrapper
+│   ├── search/            # Search engine
+│   │   └── engine.py      # SearchEngine
+│   ├── tests/             # Test suite
+│   ├── server.py          # MCP server entry point
+│   └── requirements.txt
+├── .agents/               # AI skills
+│   └── skills/deep-search/SKILL.md
+├── docs/                  # Documentation
 └── README.md
 ```
 
