@@ -12,6 +12,7 @@ from search.monitors import MonitorManager
 from search.research import ResearchManager
 from search.context import ContextEngine
 from search.streaming import StreamSearchManager
+from search.websets import WebsetManager
 from crawlers.web_crawler import WebCrawler
 
 mcp = FastMCP("DeepSearchEngine")
@@ -22,6 +23,7 @@ monitor_manager = MonitorManager()
 research_manager = ResearchManager(engine.vector_store.client, engine.vector_store.embedding_model)
 context_engine = ContextEngine(engine.crawler_manager, engine.vector_store)
 stream_manager = StreamSearchManager(engine.crawler_manager, engine.vector_store)
+webset_manager = WebsetManager()
 
 
 # --- Core Search Tools ---
@@ -634,6 +636,114 @@ def delete_session(session_id: str) -> str:
     if deleted:
         return f"Research session {session_id} deleted."
     return f"Research session {session_id} not found."
+
+
+# --- Webset Tools ---
+
+
+@mcp.tool()
+def create_webset(name: str, description: str = "") -> str:
+    """
+    Create a named container for collecting entity items.
+
+    Args:
+        name: Webset name (e.g., "AI Startups SF")
+        description: Optional description
+    """
+    container = webset_manager.create_container(name, description)
+    return f"Webset created: {container.id}\nName: {container.name}\nDescription: {container.description}"
+
+
+@mcp.tool()
+def add_to_webset(webset_id: str, query: str, max_results: int = 10) -> str:
+    """
+    Search and add results to a webset container.
+
+    Crawls all sources for the query and adds unique results as items.
+
+    Args:
+        webset_id: Webset ID from create_webset
+        query: Search query to find entities
+        max_results: Max results per source (default 10)
+    """
+    import asyncio
+
+    container = webset_manager.get_container(webset_id)
+    if not container:
+        return f"Webset {webset_id} not found."
+
+    results = asyncio.get_event_loop().run_until_complete(
+        engine.crawler_manager.crawl_all(query, max_results_per_source=max_results)
+    )
+    added = webset_manager.add_items_from_search(webset_id, results)
+    return f"Added {added} items to '{container.name}' ({len(container.items)} total)"
+
+
+@mcp.tool()
+def list_websets() -> str:
+    """List all webset containers."""
+    containers = webset_manager.list_containers()
+    if not containers:
+        return "No websets found."
+    lines = [f"Websets ({len(containers)}):"]
+    for c in containers:
+        lines.append(f"  [{c['id']}] {c['name']} — {c['item_count']} items\n    {c['description']}")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def get_webset(webset_id: str) -> str:
+    """
+    Get webset container with all items.
+
+    Args:
+        webset_id: Webset ID
+    """
+    container = webset_manager.get_container(webset_id)
+    if not container:
+        return f"Webset {webset_id} not found."
+
+    lines = [f"Webset: {container.name} ({container.id})", f"Items: {len(container.items)}", ""]
+    for item in container.items:
+        enriched_tag = " [enriched]" if item.enriched else ""
+        lines.append(f"  [{item.id}] {item.title}{enriched_tag}")
+        lines.append(f"    URL: {item.url}")
+        lines.append(f"    Source: {item.source}")
+        if item.properties:
+            lines.append(f"    Properties: {json.dumps(item.properties, indent=6)}")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def enrich_webset(webset_id: str) -> str:
+    """
+    Enrich all items in a webset by scraping their URLs.
+
+    Extracts emails, social links, technologies, and page metadata.
+
+    Args:
+        webset_id: Webset ID
+    """
+    container = webset_manager.get_container(webset_id)
+    if not container:
+        return f"Webset {webset_id} not found."
+
+    count = await webset_manager.enrich_all(webset_id)
+    return f"Enriched {count} items in '{container.name}'"
+
+
+@mcp.tool()
+def delete_webset(webset_id: str) -> str:
+    """
+    Delete a webset container and all its items.
+
+    Args:
+        webset_id: Webset ID
+    """
+    deleted = webset_manager.delete_container(webset_id)
+    if deleted:
+        return f"Webset {webset_id} deleted."
+    return f"Webset {webset_id} not found."
 
 
 if __name__ == "__main__":
