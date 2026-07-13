@@ -7,10 +7,12 @@ from search.categories import get_category_info, detect_category
 from search.lead_gen import create_icp
 from search.code_context import search_code_context
 from search.livecrawl import livecrawl_manager
+from search.answer import AnswerEngine
 from crawlers.web_crawler import WebCrawler
 
 mcp = FastMCP("DeepSearchEngine")
 engine = SearchEngine()
+answer_engine = AnswerEngine(engine.crawler_manager, engine.vector_store)
 web_crawler = WebCrawler()
 
 
@@ -305,6 +307,42 @@ async def quick_search(query: str, source: str = "") -> str:
 
 
 # --- Utility Tools ---
+
+@mcp.tool()
+async def answer(
+    query: str,
+    num_results: int = 10,
+    output_schema: str = "",
+    system_prompt: str = "",
+) -> dict:
+    """
+    Get an answer with inline citations [1][2].
+
+    Searches all 7 sources (Web, Reddit, YouTube, GitHub,
+    Twitter/X, DuckDuckGo, Wikipedia) and returns numbered
+    citations with a synthesis prompt for the AI host.
+
+    Args:
+        query: Question to answer
+        num_results: Number of source results (default 10, max 20)
+        output_schema: JSON string of output schema (optional)
+        system_prompt: Custom instructions for synthesis (optional)
+    """
+    import json as _json
+    schema = _json.loads(output_schema) if output_schema else None
+    result = await answer_engine.answer(
+        query=query,
+        num_results=min(num_results, 20),
+        output_schema=schema,
+        system_prompt=system_prompt,
+    )
+    return {
+        "query": result.query,
+        "context": result.context,
+        "synthesis_prompt": result.synthesis_prompt,
+        "sources": result.sources,
+    }
+
 
 @mcp.tool()
 def list_sources() -> str:
