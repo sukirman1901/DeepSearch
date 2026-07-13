@@ -38,56 +38,56 @@ CATEGORY_CONFIGS: dict[Category, CategoryConfig] = {
     Category.COMPANY: CategoryConfig(
         name="Company Research",
         description="Company profiles, competitors, funding, news",
-        sources=["web", "twitter", "reddit"],
+        sources=["duckduckgo", "twitter", "reddit"],
         keywords=["company", "startup", "funding", "acquisition", "IPO", "revenue", "competitor"],
         exclude_sources=["youtube", "github"]
     ),
     Category.PEOPLE: CategoryConfig(
         name="People Search",
         description="Professional profiles, expertise, background",
-        sources=["web", "twitter", "github"],
+        sources=["duckduckgo", "twitter", "github"],
         keywords=["profile", "linkedin", "expert", "founder", "CEO", "developer", "researcher"],
         exclude_sources=["youtube"]
     ),
     Category.RESEARCH_PAPER: CategoryConfig(
         name="Research Papers",
         description="Academic papers, arXiv, scientific research",
-        sources=["web", "duckduckgo"],
+        sources=["duckduckgo", "wikipedia"],
         keywords=["paper", "arxiv", "research", "study", "abstract", "journal", "conference"],
         exclude_sources=["youtube", "twitter"]
     ),
     Category.FINANCIAL_REPORT: CategoryConfig(
         name="Financial Reports",
         description="SEC filings, earnings, financial documents",
-        sources=["web", "duckduckgo"],
+        sources=["duckduckgo", "wikipedia"],
         keywords=["SEC", "10-K", "10-Q", "earnings", "financial", "filing", "annual report"],
         exclude_sources=["youtube", "twitter", "github"]
     ),
     Category.PERSONAL_SITE: CategoryConfig(
         name="Personal Sites",
         description="Personal blogs, portfolios, independent content",
-        sources=["web", "duckduckgo"],
+        sources=["duckduckgo", "wikipedia"],
         keywords=["blog", "portfolio", "personal", "homepage", "about me"],
         exclude_sources=["youtube"]
     ),
     Category.NEWS: CategoryConfig(
         name="News",
         description="Recent news articles and press releases",
-        sources=["web", "twitter", "duckduckgo"],
+        sources=["duckduckgo", "twitter", "wikipedia"],
         keywords=["news", "breaking", "latest", "today", "recent", "update"],
         exclude_sources=["github"]
     ),
     Category.CODE: CategoryConfig(
         name="Code",
         description="Code examples, API docs, technical snippets",
-        sources=["github", "web"],
+        sources=["github", "duckduckgo", "youtube"],
         keywords=["code", "implementation", "example", "API", "documentation", "tutorial"],
-        exclude_sources=["youtube"]
+        exclude_sources=[]
     ),
     Category.GENERAL: CategoryConfig(
         name="General",
         description="General search across all sources",
-        sources=["web", "duckduckgo", "reddit", "wikipedia"],
+        sources=["duckduckgo", "youtube", "github", "wikipedia"],
         keywords=[],
         exclude_sources=[]
     )

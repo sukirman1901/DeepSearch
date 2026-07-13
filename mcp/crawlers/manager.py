@@ -54,7 +54,7 @@ class CrawlerManager:
             if source_name in self.crawlers:
                 crawler = self.crawlers[source_name]
                 for q in queries:
-                    tasks.append(self._crawl_safe(crawler, q, max_results_per_source // len(queries)))
+                    tasks.append(self._crawl_safe(crawler, q, max(1, max_results_per_source // len(queries))))
 
         results = await asyncio.gather(*tasks)
         all_results = [item for sublist in results for item in sublist]
@@ -115,7 +115,7 @@ class CrawlerManager:
                 crawler = self.crawlers[source_name]
                 for q in queries:
                     task = asyncio.create_task(
-                        self._crawl_safe(crawler, q, max_results_per_source // len(queries))
+                        self._crawl_safe(crawler, q, max(1, max_results_per_source // len(queries)))
                     )
                     tasks[task] = source_name
 

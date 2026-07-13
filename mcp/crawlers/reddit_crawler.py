@@ -5,7 +5,7 @@ from crawlers.base import BaseCrawler, CrawlResult
 class RedditCrawler(BaseCrawler):
     def __init__(self):
         self.base_url = "https://www.reddit.com"
-        self.headers = {"User-Agent": "Mozilla/5.0 (compatible; SearchEngine/1.0)"}
+        self.headers = {"User-Agent": "Mozilla/5.0 (compatible; DeepSearch/1.0; +https://github.com/deepsearch)"}
 
     async def crawl(self, query: str, max_results: int = 10) -> list[CrawlResult]:
         try:
@@ -17,7 +17,7 @@ class RedditCrawler(BaseCrawler):
                 "limit": max_results
             }
 
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(headers=self.headers, follow_redirects=True) as client:
                 response = await client.get(url, params=params, headers=self.headers)
                 response.raise_for_status()
                 data = response.json()
