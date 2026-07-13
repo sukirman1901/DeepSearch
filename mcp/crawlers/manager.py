@@ -119,12 +119,16 @@ class CrawlerManager:
                     )
                     tasks[task] = source_name
 
-        for completed in asyncio.as_completed(list(tasks.keys())):
-            source_name = tasks[completed]
+        # Wrap each task to carry source_name through as_completed
+        async def _tagged(coro, name):
+            return name, await coro
+
+        tagged = [_tagged(t, tasks[t]) for t in tasks]
+        for completed in asyncio.as_completed(tagged):
             try:
-                results = await completed
+                source_name, results = await completed
             except Exception:
-                results = []
+                continue
 
             for result in results:
                 if result.category == "general":

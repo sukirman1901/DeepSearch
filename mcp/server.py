@@ -1,4 +1,4 @@
-# server.py — Consolidated MCP tools (31 → 11)
+# server.py — Consolidated MCP tools (31 → 10)
 # All features preserved, just combined by action/mode parameter.
 
 import asyncio
@@ -141,6 +141,32 @@ async def search(
     if mode == "stream":
         source_list = [s.strip() for s in sources.split(",") if s.strip()] if sources else None
         result = await stream_manager.search(query, limit, source_list)
+        if result.total_results == 0:
+            # Auto-fallback: all sources failed → try DuckDuckGo live
+            from crawlers.duckduckgo_crawler import DuckDuckGoCrawler
+            ddg = DuckDuckGoCrawler()
+            fallback = await ddg.crawl(query, max_results=limit or 10)
+            if fallback:
+                data = {
+                    "query": query,
+                    "total_results": len(fallback),
+                    "total_time_ms": 0,
+                    "sources_searched": ["duckduckgo (fallback)"],
+                    "batches": [
+                        {
+                            "batch": 1,
+                            "source": "duckduckgo (fallback)",
+                            "time_ms": 0,
+                            "result_count": len(fallback),
+                            "results": [
+                                {"title": r.title, "url": r.url, "content": r.content[:500], "source": "duckduckgo"}
+                                for r in fallback
+                            ],
+                        }
+                    ],
+                    "note": "All sources returned no results. Showing DuckDuckGo fallback.",
+                }
+                return json.dumps(data, indent=2)
         data = {
             "query": result.query,
             "total_results": result.total_results,
@@ -758,6 +784,23 @@ async def search_leads(
     )
     leads = engine.search_leads(query, limit, icp=icp)
     if not leads:
+        # Auto-fallback: DB empty → live crawl via DuckDuckGo
+        from crawlers.duckduckgo_crawler import DuckDuckGoCrawler
+        ddg = DuckDuckGoCrawler()
+        live_results = await ddg.crawl(query, max_results=limit)
+        if live_results:
+            if icp:
+                engine.lead_scorer.set_icp(icp)
+            leads = engine.lead_scorer.score_batch(live_results)
+            if leads:
+                output = f"No indexed leads. Live search via DuckDuckGo ({len(leads)} leads):\n\n"
+                for i, lead in enumerate(leads[:limit], 1):
+                    output += f"--- Lead {i} (Score: {lead.score:.0f}/100) ---\n"
+                    output += f"Title: {lead.result.title}\n"
+                    output += f"URL: {lead.result.url}\n"
+                    output += f"Reasons: {', '.join(lead.match_reasons)}\n"
+                    output += "\n"
+                return output
         return "No leads found."
     output = f"Found {len(leads)} leads for '{query}':\n\n"
     for i, lead in enumerate(leads[:limit], 1):
