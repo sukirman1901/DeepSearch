@@ -12,6 +12,31 @@
 
 ## Installation
 
+### Option 1: Plugin Installation (Recommended)
+
+**OpenCode:**
+```json
+{
+  "plugin": ["deep-search@git+https://github.com/sukirman1901/DeepSearch.git"]
+}
+```
+
+**Claude Code:**
+Add to `.mcp.json` or `~/.claude/config.json`:
+```json
+{
+  "mcpServers": {
+    "deep-search": {
+      "command": "python3",
+      "args": ["server.py"],
+      "cwd": "/path/to/DeepSearch/mcp"
+    }
+  }
+}
+```
+
+### Option 2: Manual Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/sukirman1901/DeepSearch.git
@@ -76,26 +101,26 @@ results = await deep_search("AI", source="reddit")
 DeepSearch/
 ├── mcp/                    # MCP server implementation
 │   ├── crawlers/           # 7 specialized crawlers
-│   │   ├── base.py        # BaseCrawler ABC
-│   │   ├── web_crawler.py
-│   │   ├── reddit_crawler.py
-│   │   ├── youtube_crawler.py
-│   │   ├── github_crawler.py
-│   │   ├── twitter_crawler.py
-│   │   ├── duckduckgo_crawler.py
-│   │   ├── wikipedia_crawler.py
-│   │   └── manager.py     # CrawlerManager
 │   ├── db/                # Database layer
-│   │   ├── embeddings.py  # SentenceTransformer wrapper
-│   │   └── vector_store.py # ChromaDB wrapper
 │   ├── search/            # Search engine
-│   │   └── engine.py      # SearchEngine
 │   ├── tests/             # Test suite
 │   ├── server.py          # MCP server entry point
 │   └── requirements.txt
-├── .agents/               # AI skills
-│   └── skills/deep-search/SKILL.md
-├── docs/                  # Documentation
+├── skills/                # AI skills
+│   └── using-deep-search/SKILL.md
+├── hooks/                 # Session hooks
+│   ├── hooks.json         # Claude hooks
+│   ├── hooks-cursor.json  # Cursor hooks
+│   └── session-start      # Session start script
+├── .claude-plugin/        # Claude plugin manifest
+├── .cursor-plugin/        # Cursor plugin manifest
+├── .codex-plugin/         # Codex plugin manifest
+├── .kimi-plugin/          # Kimi plugin manifest
+├── .opencode/             # OpenCode plugin
+├── package.json           # npm package config
+├── CLAUDE.md              # Claude instructions
+├── AGENTS.md              # AI agent instructions
+├── GEMINI.md              # Gemini instructions
 └── README.md
 ```
 
@@ -113,9 +138,12 @@ Crawlers collect raw data. AI agent downstream validates, scores, and summarizes
 
 ## Supported Platforms
 
-- Claude Desktop
-- Cursor
-- OpenCode
+- **OpenCode** - Plugin installation via `plugin` config
+- **Claude Code** - MCP server configuration
+- **Cursor** - Plugin installation
+- **Codex** - Plugin installation
+- **Kimi Code** - Plugin installation
+- **Gemini CLI** - Extension support
 - Any MCP-compatible client
 
 ## License
