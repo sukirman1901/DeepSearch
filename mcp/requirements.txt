@@ -6,3 +6,4 @@ yt-dlp
 chromadb
 sentence-transformers<4
 fastmcp
+html2text
