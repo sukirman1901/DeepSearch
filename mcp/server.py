@@ -8,12 +8,14 @@ from search.lead_gen import create_icp
 from search.code_context import search_code_context
 from search.livecrawl import livecrawl_manager
 from search.answer import AnswerEngine
+from search.monitors import MonitorManager
 from crawlers.web_crawler import WebCrawler
 
 mcp = FastMCP("DeepSearchEngine")
 engine = SearchEngine()
 answer_engine = AnswerEngine(engine.crawler_manager, engine.vector_store)
 web_crawler = WebCrawler()
+monitor_manager = MonitorManager()
 
 
 # --- Core Search Tools ---
@@ -391,6 +393,80 @@ def db_stats() -> str:
         f"- Misses: {cache_stats['misses']}\n"
         f"- Livecrawls: {cache_stats['livecrawls']}"
     )
+
+
+# --- Monitor Tools ---
+
+
+@mcp.tool()
+def create_monitor(query: str, sources: str = "", max_results: int = 20) -> str:
+    """
+    Create a recurring search monitor with deduplication.
+
+    Each run returns only NEW results not seen in previous runs.
+
+    Args:
+        query: Search query to monitor
+        sources: Comma-separated sources (e.g., "web,reddit") — empty = all
+        max_results: Max results per source per run (default 20)
+    """
+    source_list = [s.strip() for s in sources.split(",") if s.strip()] if sources else None
+    mid = monitor_manager.create_monitor(
+        query=query, sources=source_list, max_results=max_results
+    )
+    return f"Monitor created with ID: {mid}\nQuery: {query}\nSources: {sources or 'all'}"
+
+
+@mcp.tool()
+def list_monitors() -> str:
+    """List all monitors with stats."""
+    monitors = monitor_manager.list_monitors()
+    if not monitors:
+        return "No monitors found."
+    lines = [f"Monitors ({len(monitors)}):"]
+    for m in monitors:
+        lines.append(
+            f"  [{m['id']}] {m['query']}\n"
+            f"    Runs: {m['run_count']} | Seen: {m['seen_count']} | "
+            f"Last run: {m['last_run'] or 'never'}"
+        )
+    return "\n".join(lines)
+
+
+@mcp.tool()
+async def run_monitor(monitor_id: str) -> str:
+    """
+    Run a monitor — returns only NEW results since last run.
+
+    Args:
+        monitor_id: Monitor ID from create_monitor
+    """
+    results = await monitor_manager.run_monitor(monitor_id, engine.crawler_manager)
+    if results is None:
+        return f"Monitor {monitor_id} not found."
+    if not results:
+        monitors = monitor_manager.list_monitors()
+        seen = next((m["seen_count"] for m in monitors if m["id"] == monitor_id), 0)
+        return f"No new results since last run. Total seen: {seen}"
+
+    lines = [f"New results: {len(results)}"]
+    for r in results:
+        lines.append(f"  - {r.title} ({r.source})\n    {r.url}")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def delete_monitor(monitor_id: str) -> str:
+    """
+    Delete a monitor and its state.
+
+    Args:
+        monitor_id: Monitor ID to delete
+    """
+    deleted = monitor_manager.delete_monitor(monitor_id)
+    if deleted:
+        return f"Monitor {monitor_id} deleted."
+    return f"Monitor {monitor_id} not found."
 
 
 if __name__ == "__main__":
