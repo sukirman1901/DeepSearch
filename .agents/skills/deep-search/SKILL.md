@@ -10,10 +10,14 @@ Use this skill when:
 - User wants structured output (JSON, Markdown, CSV)
 - User needs code snippets or programming examples
 - User wants fresh content with caching control
+- User wants token-budget-aware results for coding agents
+- User wants streaming results with completion order
+- User wants to build entity lists with enrichment
+- User wants persistent monitoring for topics
 
-## Available Tools
+## Available Tools (28)
 
-### Core Search Tools
+### Core Search
 
 #### `deep_search(query, source, limit, category, format_type)`
 Semantic search across all indexed content.
@@ -24,7 +28,7 @@ Semantic search across all indexed content.
 - `format_type`: Output format (text, json, markdown) - default text
 
 #### `advanced_search(query, limit, include_domains, exclude_domains, start_date, end_date, include_text, exclude_text, include_sources, exclude_sources, boost_recent, boost_popular, format_type)`
-Search with advanced filters inspired by Exa.
+Search with advanced filters.
 - `query`: Search query
 - `limit`: Max results (default 10)
 - `include_domains`: Only include results from these domains
@@ -44,38 +48,6 @@ Real-time search without using the database.
 - `query`: Search query
 - `source`: Source to search (duckduckgo, reddit, etc.) - optional
 
-### Code Context Tools
-
-#### `code_search(query, max_results, language, tokens_target)`
-Search for code snippets from GitHub and Stack Overflow.
-Inspired by Exa's Context API for coding agents.
-- `query`: Code search query (e.g., "React hooks state management")
-- `max_results`: Max snippets to return (default 10)
-- `language`: Filter by programming language (e.g., "python", "javascript")
-- `tokens_target`: Target token count for response (default 5000)
-
-### Lead Generation Tools
-
-#### `search_leads(query, limit, industries, roles, technologies, locations, keywords)`
-Search and score leads against an Ideal Customer Profile (ICP).
-- `query`: Search query
-- `limit`: Max leads (default 20)
-- `industries`: Target industries (e.g., ["fintech", "saas"])
-- `roles`: Target roles (e.g., ["CEO", "CTO", "Developer"])
-- `technologies`: Target technologies (e.g., ["Python", "React"])
-- `locations`: Target locations (e.g., ["San Francisco", "Remote"])
-- `keywords`: Additional keywords to match
-
-### Category Tools
-
-#### `list_categories()`
-List all available search categories and their descriptions.
-
-#### `detect_query_category(query)`
-Auto-detect the best category for a search query.
-
-### Indexing Tools
-
 #### `index_topic(topic, max_results_per_source, category, sources)`
 Crawl and index a topic with optional category and source filtering.
 - `topic`: Topic to index
@@ -83,23 +55,121 @@ Crawl and index a topic with optional category and source filtering.
 - `category`: Category hint (auto, company, people, etc.) - default auto
 - `sources`: Specific sources to crawl (optional, default all)
 
-#### `web_crawl(url, max_age_hours, livecrawl_timeout)`
-Crawl a specific URL and add to index with caching control.
+#### `web_crawl(url, max_age_hours, livecrawl_timeout, subpages, subpage_target)`
+Crawl a specific URL with optional subpage discovery.
 - `url`: URL to crawl
 - `max_age_hours`: Cache freshness control (default -1)
-  - `24`: Use cache if <24 hours old
-  - `1`: Use cache if <1 hour old
-  - `0`: Always livecrawl
-  - `-1`: Cache only
-- `livecrawl_timeout`: Timeout in ms for livecrawl (default 10000)
+- `subpages`: Enable subpage crawling (default false)
+- `subpage_target`: Target number of subpages (default 10)
 
-### Utility Tools
+### Answer & Context
+
+#### `answer(query, num_results, output_schema, system_prompt)`
+Search all sources and return context + synthesis prompt with inline citations.
+- `query`: Question to answer
+- `num_results`: Max results (default 10)
+- `output_schema`: Optional JSON schema for structured output
+- `system_prompt`: Optional system prompt for synthesis
+
+#### `context_search(query, budget_tokens, language, num_results)`
+Token-budget-aware snippet packing for coding agents.
+- `query`: What to search for
+- `budget_tokens`: Max tokens for returned context (default 8000)
+- `language`: Filter by programming language
+- `num_results`: Max results to consider (default 20)
+
+#### `code_search(query, max_results, language, tokens_target)`
+Search for code snippets from GitHub and Stack Overflow.
+- `query`: Code search query
+- `max_results`: Max snippets to return (default 10)
+- `language`: Filter by programming language
+- `tokens_target`: Target token count (default 5000)
+
+### Streaming & Research
+
+#### `stream_search(query, num_results, sources)`
+Results grouped by completion order with timing metadata.
+- `query`: Search query
+- `num_results`: Max results per source (default 10)
+- `sources`: Comma-separated sources (empty = all)
+
+#### `start_research(query, sources, max_results)`
+Deep research session with auto sub-queries.
+- `query`: Research topic/question
+- `sources`: Comma-separated sources (empty = all)
+- `max_results`: Max results per source per sub-query (default 15)
+
+#### `ask_followup(session_id, query, num_results)`
+Semantic follow-up within a research session.
+- `session_id`: Session ID from start_research
+- `query`: Follow-up question
+- `num_results`: Number of results (default 5)
+
+#### `list_sessions()`
+List all research sessions.
+
+#### `delete_session(session_id)`
+Delete a research session.
+
+### Categories & Filters
+
+#### `list_categories()`
+List all available search categories and their descriptions.
+
+#### `detect_query_category(query)`
+Auto-detect the best category for a search query.
+
+### Monitors
+
+#### `create_monitor(name, query, sources, interval_hours, max_results)`
+Create persistent monitoring for a topic.
+- `name`: Monitor name
+- `query`: What to monitor
+- `sources`: Comma-separated sources (empty = all)
+- `interval_hours`: Check interval (default 24)
+- `max_results`: Max results per check (default 10)
+
+#### `list_monitors()`
+List all monitors.
+
+#### `run_monitor(monitor_id)`
+Run monitor, returns only new results since last check.
+
+#### `delete_monitor(monitor_id)`
+Delete a monitor.
+
+### Websets
+
+#### `create_webset(name, description)`
+Create a named container for entity lists.
+
+#### `add_to_webset(webset_id, query, max_results)`
+Search and add results to a webset container.
+
+#### `list_websets()`
+List all webset containers.
+
+#### `get_webset(webset_id)`
+Get webset container with all items.
+
+#### `enrich_webset(webset_id)`
+Scrape URLs for emails, social links, technologies.
+
+#### `delete_webset(webset_id)`
+Delete a webset container.
+
+### Lead Generation
+
+#### `search_leads(query, limit, industries, roles, technologies, locations, keywords)`
+Search and score leads against an Ideal Customer Profile (ICP).
+
+### Utility
 
 #### `list_sources()`
 List all available data sources.
 
 #### `db_stats()`
-Get database and cache statistics.
+Get database statistics.
 
 ## Livecrawling (Content Freshness)
 
@@ -129,9 +199,17 @@ Control how fresh content should be with `max_age_hours` parameter:
 ## Workflow
 
 ### Comprehensive Research
-1. `index_topic` - crawl and index data from all sources
-2. `deep_search` - semantic search for relevant content
-3. Review and summarize findings
+1. `start_research` - deep research with auto sub-queries
+2. `ask_followup` - semantic follow-up questions
+3. Review and synthesize findings
+
+### Token-Budget Search (for coding agents)
+1. `context_search` - search with token budget limit
+2. Inject results into context window
+
+### Streaming Search
+1. `stream_search` - see which sources complete first
+2. Fast sources (DuckDuckGo, Wikipedia) appear first
 
 ### Code Search
 1. `code_search` - find code snippets from GitHub/Stack Overflow
@@ -142,37 +220,22 @@ Control how fresh content should be with `max_age_hours` parameter:
 2. `search_leads` with ICP filters
 3. Review company profiles and contact info
 
-### People Search
-1. `advanced_search` with category "people"
-2. Filter by role, company, expertise
-3. Review LinkedIn profiles and backgrounds
+### Entity List Building
+1. `create_webset` - create a named container
+2. `add_to_webset` - search and collect entities
+3. `enrich_webset` - extract emails, social links, technologies
+
+### Monitoring
+1. `create_monitor` - set up topic monitoring
+2. `run_monitor` - check for new results periodically
 
 ### Quick Research
 1. `quick_search` - real-time search
 2. Review results
 
 ### Specific URL Research
-1. `web_crawl` - crawl and index the URL
+1. `web_crawl` - crawl and index the URL (use `subpages=true` for more)
 2. `deep_search` - search for related content
-
-### Fresh Content
-1. `web_crawl` with `max_age_hours=1` for near real-time
-2. `web_crawl` with `max_age_hours=0` for real-time
-
-## Token Isolation Pattern
-
-For heavy search operations, spawn a subagent to keep main context clean:
-
-```python
-# Agent pattern for token isolation
-async def search_with_isolation(query: str, category: str = "general"):
-    # 1. Spawn subagent for search
-    # 2. Subagent calls advanced_search or search_leads
-    # 3. Subagent merges + deduplicates results
-    # 4. Subagent returns distilled output
-    # 5. Main context stays clean
-    pass
-```
 
 ## Sources
 - Web: General web crawling
@@ -185,6 +248,10 @@ async def search_with_isolation(query: str, category: str = "general"):
 - Wikipedia: Articles
 
 ## Tips
+- Use `start_research` for deep multi-source research
+- Use `context_search` for token-budget-aware results
+- Use `stream_search` to see which sources complete first
+- Use `answer` for synthesis-ready context with citations
 - Use `detect_query_category` to auto-categorize queries
 - Use `advanced_search` for precise filtering by domain, date, or text
 - Use `search_leads` with ICP for B2B lead generation
@@ -194,4 +261,3 @@ async def search_with_isolation(query: str, category: str = "general"):
 - For fresh content, use `web_crawl` with `max_age_hours=0` or `1`
 - AI validates results - don't just trust crawler output
 - Combine multiple sources for comprehensive understanding
-- Use `format_type="json"` for structured data integration
