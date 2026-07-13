@@ -4,7 +4,7 @@
 
 ## MCP Server Setup
 
-The Deep Search MCP server provides semantic search across 7 data sources. To use it in Claude Code, add the MCP server to your Claude Code configuration:
+The Deep Search MCP server provides semantic search across 7 data sources with 28 tools. To use it in Claude Code, add the MCP server to your Claude Code configuration:
 
 ### Option 1: Project-level MCP config
 

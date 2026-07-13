@@ -1,7 +1,7 @@
 {
   "name": "deep-search",
   "displayName": "Deep Search",
-  "description": "Deep Search Engine MCP server: 7 data sources, semantic search via ChromaDB, zero cost alternative to Exa MCP",
+  "description": "Deep Search Engine MCP server: 7 sources, 28 tools, semantic search via ChromaDB, zero cost",
   "version": "1.0.0",
   "author": {
     "name": "Sukirman",

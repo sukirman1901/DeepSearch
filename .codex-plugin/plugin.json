@@ -1,7 +1,7 @@
 {
   "name": "deep-search",
   "version": "1.0.0",
-  "description": "Deep Search Engine MCP server: 7 data sources, semantic search via ChromaDB, zero cost alternative to Exa MCP.",
+  "description": "Deep Search Engine MCP server: 7 sources, 28 tools, semantic search via ChromaDB, zero cost.",
   "author": {
     "name": "Sukirman",
     "email": "sukirman1901@users.noreply.github.com",
@@ -27,7 +27,7 @@
   "hooks": "./hooks/hooks-codex.json",
   "interface": {
     "displayName": "Deep Search",
-    "shortDescription": "Deep Search Engine for semantic search across 7 data sources",
+    "shortDescription": "Deep Search Engine for semantic search across 7 sources with 28 tools",
     "longDescription": "Use Deep Search to perform comprehensive research across web, Reddit, YouTube, GitHub, Twitter, Wikipedia, and DuckDuckGo. Semantic search via ChromaDB with zero cost.",
     "developerName": "Sukirman",
     "category": "Search",

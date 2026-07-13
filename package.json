@@ -1,7 +1,7 @@
 {
   "name": "deep-search",
   "version": "1.0.0",
-  "description": "Deep Search Engine MCP server: 7 data sources, semantic search via ChromaDB, zero cost alternative to Exa MCP",
+  "description": "Deep Search Engine MCP server: 7 sources, 28 tools, semantic search via ChromaDB, zero cost",
   "type": "module",
   "main": "./.opencode/plugins/deep-search.js",
   "keywords": [

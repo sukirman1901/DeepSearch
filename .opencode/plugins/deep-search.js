@@ -4,7 +4,7 @@
 export default {
   name: "deep-search",
   version: "1.0.0",
-  description: "Deep Search Engine MCP server: 7 data sources, semantic search via ChromaDB",
+  description: "Deep Search Engine MCP server: 7 sources, 28 tools, semantic search via ChromaDB",
   
   // Register MCP server
   mcp: {
