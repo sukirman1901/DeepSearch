@@ -9,6 +9,7 @@ from search.code_context import search_code_context
 from search.livecrawl import livecrawl_manager
 from search.answer import AnswerEngine
 from search.monitors import MonitorManager
+from search.research import ResearchManager
 from crawlers.web_crawler import WebCrawler
 
 mcp = FastMCP("DeepSearchEngine")
@@ -16,6 +17,7 @@ engine = SearchEngine()
 answer_engine = AnswerEngine(engine.crawler_manager, engine.vector_store)
 web_crawler = WebCrawler()
 monitor_manager = MonitorManager()
+research_manager = ResearchManager(engine.vector_store.client, engine.vector_store.embedding_model)
 
 
 # --- Core Search Tools ---
@@ -467,6 +469,93 @@ def delete_monitor(monitor_id: str) -> str:
     if deleted:
         return f"Monitor {monitor_id} deleted."
     return f"Monitor {monitor_id} not found."
+
+
+# --- Research Tools ---
+
+
+@mcp.tool()
+async def start_research(query: str, sources: str = "", max_results: int = 15) -> str:
+    """
+    Start a deep research session on a topic.
+
+    Auto-generates sub-queries, crawls all sources, indexes results
+    for semantic follow-up questions.
+
+    Args:
+        query: Research topic/question
+        sources: Comma-separated sources (e.g., "web,reddit") — empty = all
+        max_results: Max results per source per sub-query (default 15)
+    """
+    source_list = [s.strip() for s in sources.split(",") if s.strip()] if sources else None
+    result = await research_manager.start_research(
+        query=query,
+        sources=source_list,
+        max_results=max_results,
+        crawler_manager=engine.crawler_manager,
+    )
+    lines = [
+        f"Research session started: {result['session_id']}",
+        f"Results indexed: {result['result_count']}",
+        f"Sub-queries used: {', '.join(result['sub_queries'])}",
+        f"\nTop results:",
+    ]
+    for title in result["top_titles"]:
+        lines.append(f"  - {title}")
+    lines.append(f"\nUse ask_followup(session_id='{result['session_id']}', query='...') to ask questions about this research.")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def ask_followup(session_id: str, query: str, num_results: int = 5) -> str:
+    """
+    Ask a follow-up question about a research session.
+
+    Performs semantic search within the session's indexed results.
+
+    Args:
+        session_id: Session ID from start_research
+        query: Follow-up question
+        num_results: Number of results (default 5)
+    """
+    results = research_manager.ask_followup(session_id, query, num_results)
+    if not results:
+        return f"Session {session_id} not found or no results."
+
+    lines = [f"Follow-up results ({len(results)}):"]
+    for r in results:
+        lines.append(f"  - {r.title} ({r.source})\n    {r.url}\n    {r.content[:200]}")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def list_sessions() -> str:
+    """List all research sessions with stats."""
+    sessions = research_manager.list_sessions()
+    if not sessions:
+        return "No research sessions found."
+    lines = [f"Research sessions ({len(sessions)}):"]
+    for s in sessions:
+        lines.append(
+            f"  [{s['id']}] {s['query']}\n"
+            f"    Results: {s['result_count']} | Follow-ups: {s['followup_count']} | "
+            f"Created: {s['created_at']}"
+        )
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def delete_session(session_id: str) -> str:
+    """
+    Delete a research session and its indexed data.
+
+    Args:
+        session_id: Session ID to delete
+    """
+    deleted = research_manager.delete_session(session_id)
+    if deleted:
+        return f"Research session {session_id} deleted."
+    return f"Research session {session_id} not found."
 
 
 if __name__ == "__main__":
