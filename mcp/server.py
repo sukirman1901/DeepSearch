@@ -14,6 +14,8 @@ from search.context import ContextEngine
 from search.streaming import StreamSearchManager
 from search.websets import WebsetManager
 from search.smart_search import SmartSearchEngine
+from search.sitemap import SiteMapper
+from search.extract import ContentExtractor
 from crawlers.web_crawler import WebCrawler
 
 mcp = FastMCP("DeepSearchEngine")
@@ -26,6 +28,8 @@ context_engine = ContextEngine(engine.crawler_manager, engine.vector_store)
 stream_manager = StreamSearchManager(engine.crawler_manager, engine.vector_store)
 webset_manager = WebsetManager()
 smart_engine = SmartSearchEngine(engine.crawler_manager, engine.vector_store)
+site_mapper = SiteMapper()
+content_extractor = ContentExtractor()
 
 
 # --- Core Search Tools ---
@@ -37,6 +41,9 @@ async def deep_search(
     limit: int = 10,
     category: str = "",
     format_type: str = "text",
+    search_depth: str = "basic",
+    topic: str = "general",
+    max_age_hours: int = -1,
 ) -> str:
     """
     Semantic search across all indexed content with optional filtering.
@@ -47,6 +54,9 @@ async def deep_search(
         limit: Maximum number of results (default 10)
         category: Category filter (company, people, research_paper, etc.) - optional
         format_type: Output format (text, json, markdown) - default text
+        search_depth: Search depth - "fast" (3/source), "basic" (5/source), "advanced" (20/source + rerank)
+        topic: Topic filter - "general" (default) or "news" (boost recent news sites)
+        max_age_hours: Freshness filter - -1 (no limit), 1 (last hour), 24 (last day), 168 (last week)
     """
     if category == "auto":
         category = engine.detect_query_category(query)
@@ -55,7 +65,10 @@ async def deep_search(
         output = engine.search_and_format(query, limit, format_type, category)
         return output
 
-    results = engine.search(query, limit, source, category=category)
+    results = engine.search(
+        query, limit, source, category=category,
+        search_depth=search_depth, topic=topic, max_age_hours=max_age_hours,
+    )
 
     if not results:
         return "No results found. Try indexing a topic first with index_topic."
@@ -85,6 +98,9 @@ async def advanced_search(
     boost_recent: bool = False,
     boost_popular: bool = False,
     format_type: str = "text",
+    search_depth: str = "basic",
+    topic: str = "general",
+    max_age_hours: int = -1,
 ) -> str:
     """
     Search with advanced filters (domains, dates, text, sources).
@@ -103,6 +119,9 @@ async def advanced_search(
         boost_recent: Boost more recent results
         boost_popular: Boost results with popularity metrics
         format_type: Output format (text, json, markdown)
+        search_depth: Search depth - "fast", "basic", "advanced"
+        topic: Topic filter - "general" or "news"
+        max_age_hours: Freshness filter - -1 (no limit), 1 (last hour), 24 (last day), 168 (last week)
     """
     results = engine.search_with_filters(
         query=query,
@@ -117,6 +136,9 @@ async def advanced_search(
         exclude_sources=exclude_sources or [],
         boost_recent=boost_recent,
         boost_popular=boost_popular,
+        search_depth=search_depth,
+        topic=topic,
+        max_age_hours=max_age_hours,
     )
 
     if not results:
@@ -790,6 +812,98 @@ def delete_webset(webset_id: str) -> str:
     if deleted:
         return f"Webset {webset_id} deleted."
     return f"Webset {webset_id} not found."
+
+
+# --- Site Map Tool ---
+
+
+@mcp.tool()
+def site_map(
+    url: str,
+    max_depth: int = 2,
+    instructions: str = "",
+    max_pages: int = 50,
+) -> str:
+    """
+    Map a website's structure by crawling links breadth-first.
+
+    Args:
+        url: Starting URL
+        max_depth: How many levels deep to crawl (default 2)
+        instructions: Natural language instructions to filter pages (e.g., "only blog posts")
+        max_pages: Maximum pages to crawl (default 50)
+    """
+    result = site_mapper.map_site(
+        url=url,
+        max_depth=max_depth,
+        instructions=instructions,
+        max_pages=max_pages,
+    )
+    if not result.pages:
+        return f"No pages found at {url}"
+
+    lines = [
+        f"Site map for {result.root_url}",
+        f"Total pages: {result.total_pages}",
+        f"Max depth reached: {result.max_depth_reached}",
+        "",
+    ]
+    for page in result.pages:
+        indent = "  " * page.depth
+        lines.append(f"{indent}[depth {page.depth}] {page.title or page.url}")
+        lines.append(f"{indent}  URL: {page.url}")
+        lines.append(f"{indent}  Links: {page.links_found}")
+
+    return "\n".join(lines)
+
+
+# --- Extract Content Tool ---
+
+
+@mcp.tool()
+async def extract_content(
+    urls: str,
+    extract_depth: str = "basic",
+    instructions: str = "",
+) -> str:
+    """
+    Extract structured content from URLs.
+
+    Args:
+        urls: Comma-separated URLs to extract from
+        extract_depth: "basic" (text only) or "advanced" (text + metadata + links)
+        instructions: What to extract (e.g., "product prices", "contact info")
+    """
+    url_list = [u.strip() for u in urls.split(",") if u.strip()]
+    if not url_list:
+        return "No URLs provided."
+
+    result = content_extractor.extract(
+        urls=url_list,
+        extract_depth=extract_depth,
+        instructions=instructions,
+    )
+
+    if not result.contents:
+        return "No content extracted from provided URLs."
+
+    lines = [
+        f"Extracted content from {result.urls_processed} URLs",
+        f"Depth: {result.extract_depth}",
+        f"Instructions: {result.instructions or 'none'}",
+        "",
+    ]
+    for content in result.contents:
+        lines.append(f"--- {content.title or content.url} ---")
+        lines.append(f"URL: {content.url}")
+        lines.append(f"Text: {content.text[:500]}...")
+        if content.links:
+            lines.append(f"Links: {len(content.links)} found")
+        if content.metadata:
+            lines.append(f"Metadata: {len(content.metadata)} fields")
+        lines.append("")
+
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":
