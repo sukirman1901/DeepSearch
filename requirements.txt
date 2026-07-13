@@ -1,0 +1,8 @@
+mcp
+httpx
+beautifulsoup4
+duckduckgo-search
+yt-dlp
+chromadb
+sentence-transformers<4
+fastmcp
