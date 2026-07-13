@@ -10,6 +10,7 @@ from search.livecrawl import livecrawl_manager
 from search.answer import AnswerEngine
 from search.monitors import MonitorManager
 from search.research import ResearchManager
+from search.context import ContextEngine
 from crawlers.web_crawler import WebCrawler
 
 mcp = FastMCP("DeepSearchEngine")
@@ -18,6 +19,7 @@ answer_engine = AnswerEngine(engine.crawler_manager, engine.vector_store)
 web_crawler = WebCrawler()
 monitor_manager = MonitorManager()
 research_manager = ResearchManager(engine.vector_store.client, engine.vector_store.embedding_model)
+context_engine = ContextEngine(engine.crawler_manager, engine.vector_store)
 
 
 # --- Core Search Tools ---
@@ -469,6 +471,39 @@ def delete_monitor(monitor_id: str) -> str:
     if deleted:
         return f"Monitor {monitor_id} deleted."
     return f"Monitor {monitor_id} not found."
+
+
+# --- Context Search Tool ---
+
+
+@mcp.tool()
+async def context_search(
+    query: str,
+    budget_tokens: int = 8000,
+    language: str = "",
+    num_results: int = 20,
+) -> str:
+    """
+    Search code and docs with token budget limit.
+
+    Returns snippets that fit within the token budget,
+    ready to inject into your context window.
+
+    Args:
+        query: What to search for
+        budget_tokens: Max tokens for returned context (default 8000)
+        language: Filter by programming language (e.g., "python", "javascript")
+        num_results: Max results to consider before budget packing
+    """
+    result = await context_engine.search(
+        query=query,
+        budget_tokens=budget_tokens,
+        language=language,
+        num_results=num_results,
+    )
+    lines = [result.formatted]
+    lines.append(f"\nBudget: {result.tokens_budget:,} tokens | Used: {result.tokens_used:,} | Snippets: {len(result.snippets)} of {result.total_snippets_found} considered")
+    return "\n".join(lines)
 
 
 # --- Research Tools ---
