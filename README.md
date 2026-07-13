@@ -1,10 +1,11 @@
 # Deep Search Engine MCP Server
 
-> **Free, Open-Source Alternative to Exa MCP** — Aggregates 7 sources, semantic search via ChromaDB, zero cost.
+> **Free, Open-Source Search Engine MCP Server** — 7 sources, 28 tools, semantic search via ChromaDB, zero cost.
 
 ## Features
 
 - **7 Data Sources**: Web, Reddit, YouTube, GitHub, Twitter/X, DuckDuckGo, Wikipedia
+- **28 MCP Tools**: Search, answer, context, streaming, research, monitors, websets, and more
 - **Semantic Search**: ChromaDB + sentence-transformers (all-MiniLM-L6-v2)
 - **100% Free**: No API keys, no subscriptions, no paid APIs
 - **MCP Standard**: Works with Claude, Cursor, OpenCode, and other AI clients
@@ -50,83 +51,85 @@ source .venv/bin/activate
 pip install -r mcp/requirements.txt
 ```
 
-## Usage
+## Available Tools (28)
 
-### As MCP Server (Recommended)
-
-Add to your MCP client configuration:
-
-```json
-{
-  "mcpServers": {
-    "deep-search": {
-      "command": "python",
-      "args": ["/path/to/DeepSearch/mcp/server.py"],
-      "cwd": "/path/to/DeepSearch/mcp",
-      "env": {
-        "PYTHONPATH": "/path/to/DeepSearch/mcp"
-      }
-    }
-  }
-}
-```
-
-### Available Tools
-
+### Core Search
 | Tool | Description |
 |------|-------------|
 | `deep_search` | Semantic search across indexed content |
-| `index_topic` | Crawl and index a topic from all 7 sources |
-| `web_crawl` | Crawl a specific URL and add to index |
 | `quick_search` | Real-time search without database |
+| `index_topic` | Crawl and index a topic from all 7 sources |
+| `web_crawl` | Crawl a URL with optional subpage discovery |
 | `list_sources` | List all available data sources |
 | `db_stats` | Get database statistics |
 
-### Example Workflow
+### Answer & Context
+| Tool | Description |
+|------|-------------|
+| `answer` | Search + synthesis prompt with inline citations |
+| `context_search` | Token-budget-aware snippet packing for agents |
+| `code_search` | Search GitHub + Stack Overflow for code snippets |
 
-```python
-# 1. Index a topic
-await index_topic("AI Indonesia", max_results_per_source=10)
+### Streaming & Research
+| Tool | Description |
+|------|-------------|
+| `stream_search` | Results grouped by completion order with timing |
+| `start_research` | Deep research session with auto sub-queries |
+| `ask_followup` | Semantic follow-up within research session |
+| `list_sessions` | List all research sessions |
+| `delete_session` | Delete a research session |
 
-# 2. Search semantically
-results = await deep_search("perkembangan AI di Indonesia")
+### Categories & Filters
+| Tool | Description |
+|------|-------------|
+| `advanced_search` | Filter by date range, language, region |
+| `detect_query_category` | Auto-detect query category |
+| `list_categories` | List all categories with sources |
 
-# 3. Or search specific source
-results = await deep_search("AI", source="reddit")
-```
+### Monitors
+| Tool | Description |
+|------|-------------|
+| `create_monitor` | Create persistent monitoring for a topic |
+| `list_monitors` | List all monitors |
+| `run_monitor` | Run monitor, returns only new results |
+| `delete_monitor` | Delete a monitor |
+
+### Websets
+| Tool | Description |
+|------|-------------|
+| `create_webset` | Create named container for entity lists |
+| `add_to_webset` | Search and add results to a webset |
+| `list_websets` | List all webset containers |
+| `get_webset` | Get webset with all items |
+| `enrich_webset` | Scrape URLs for emails, social links, technologies |
+| `delete_webset` | Delete a webset |
+
+### Lead Generation
+| Tool | Description |
+|------|-------------|
+| `search_leads` | Search + generate Ideal Customer Profile |
 
 ## Architecture
 
 ```
 DeepSearch/
 ├── mcp/                    # MCP server implementation
-│   ├── crawlers/           # 7 specialized crawlers
-│   ├── db/                # Database layer
-│   ├── search/            # Search engine
-│   ├── tests/             # Test suite
-│   ├── server.py          # MCP server entry point
+│   ├── crawlers/           # 7 specialized crawlers + subpage discovery
+│   ├── db/                # ChromaDB + sentence-transformers
+│   ├── search/            # Engine, answer, context, streaming, research, monitors, websets
+│   ├── tests/             # 140 tests
+│   ├── server.py          # 28 MCP tools
 │   └── requirements.txt
 ├── skills/                # AI skills
 │   └── using-deep-search/SKILL.md
 ├── hooks/                 # Session hooks
-│   ├── hooks.json         # Claude hooks
-│   ├── hooks-cursor.json  # Cursor hooks
-│   └── session-start      # Session start script
-├── .claude-plugin/        # Claude plugin manifest
-├── .cursor-plugin/        # Cursor plugin manifest
-├── .codex-plugin/         # Codex plugin manifest
-├── .kimi-plugin/          # Kimi plugin manifest
-├── .opencode/             # OpenCode plugin
-├── package.json           # npm package config
-├── CLAUDE.md              # Claude instructions
-├── AGENTS.md              # AI agent instructions
-├── GEMINI.md              # Gemini instructions
+├── docs/superpowers/specs/ # Design specs
 └── README.md
 ```
 
 ## How It Works
 
-1. **Crawlers** gather raw data from 7 sources
+1. **Crawlers** gather raw data from 7 sources (parallel async)
 2. **Sentence-transformers** embeds text to 384-dim vectors
 3. **ChromaDB** stores vectors in memory
 4. **Search engine** performs semantic search
