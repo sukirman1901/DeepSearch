@@ -109,7 +109,7 @@ class DocsSearchEngine:
         crawl_results = await crawler.crawl(query, max_results=config.max_pages)
 
         for result in crawl_results:
-            self.vector_store.add(result)
+            self.vector_store.add_docs(result)
 
         self._cache[config.id] = {
             "crawled_at": datetime.now().isoformat(),
@@ -131,18 +131,17 @@ class DocsSearchEngine:
         return pages
 
     def _search_indexed(self, library_id: str, query: str) -> list:
-        results = self.vector_store.search(query, limit=20)
+        results = self.vector_store.search_docs(query, library_id=library_id, limit=20)
         pages = []
         for result in results:
-            if result.metadata.get("library_id") == library_id:
-                pages.append(DocsPage(
-                    library_id=library_id,
-                    title=result.title,
-                    url=result.url,
-                    content=result.content,
-                    code_examples=result.metadata.get("code_examples", []),
-                    section=result.metadata.get("section", ""),
-                ))
+            pages.append(DocsPage(
+                library_id=library_id,
+                title=result.title,
+                url=result.url,
+                content=result.content,
+                code_examples=result.metadata.get("code_examples", []),
+                section=result.metadata.get("section", ""),
+            ))
         return pages
 
     def _rank_pages(self, pages: list, query: str) -> list:
