@@ -44,7 +44,7 @@ Expected: Server starts without errors.
 
 ## Available Tools (10)
 
-### `search` — Unified Search (7 modes)
+### `search` — Unified Search (8 modes)
 The main search tool. Use `mode` parameter to switch behavior:
 
 | Mode | Description | Key Params |
@@ -56,6 +56,16 @@ The main search tool. Use `mode` parameter to switch behavior:
 | `smart` | Compact IR overview + full details (saves 50-70% tokens) | top_full, max_overview_tokens |
 | `code` | Search GitHub + Stack Overflow for code snippets | language, tokens_target |
 | `context` | Token-budget-aware snippet packing | budget_tokens, language, num_results |
+| `docs` | Search programming documentation from official library sites | library, version, docs_refresh |
+
+#### Supported Libraries
+- `react` - React (https://react.dev)
+- `nextjs` - Next.js (https://nextjs.org/docs)
+- `vue` - Vue.js (https://vuejs.org)
+- `supabase` - Supabase (https://supabase.com/docs)
+- `prisma` - Prisma (https://www.prisma.io/docs)
+
+To add a new library, edit `mcp/data/docs_library_registry.json`.
 
 ### `crawl` — Crawl & Extract
 Single URL crawl with subpage discovery, or batch URL extraction.
