@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deep Search Playground</title>
+    <!-- Use Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <div id="app">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="logo">
+            <div class="logo-icon"></div>
+            <span>Deep Search</span>
+          </div>
+        </div>
+        <div class="sidebar-menu">
+          <div class="menu-section">
+            <span class="section-title">API Playground</span>
+            <a href="#" class="menu-item"><i class="icon">🔍</i> Search</a>
+            <a href="#" class="menu-item"><i class="icon">📄</i> Contents</a>
+            <a href="#" class="menu-item"><i class="icon">💬</i> Answer</a>
+            <a href="#" class="menu-item"><i class="icon">🤖</i> Agent <span class="badge">NEW</span></a>
+            <a href="#" class="menu-item active"><i class="icon">📦</i> Websets</a>
+          </div>
+        </div>
+        <div class="sidebar-footer">
+          <div class="user-profile">
+            <div class="avatar"></div>
+            <span>User</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <header class="content-header">
+          <h1>Websets</h1>
+          <p>High compute agentic search</p>
+          <div class="tabs">
+            <a href="#" class="tab active">+ Create Webset</a>
+            <a href="#" class="tab">📋 Past Websets</a>
+          </div>
+        </header>
+
+        <form id="webset-form" class="config-form">
+          <div class="form-group">
+            <label>Query</label>
+            <div class="query-input-wrapper">
+              <textarea id="query-input" placeholder="Biggest AI companies by revenue..." required></textarea>
+              <button type="submit" class="submit-btn" id="submit-btn">Search ↵</button>
+            </div>
+          </div>
+
+          <h2>Websets Configuration</h2>
+          
+          <div class="form-group row">
+            <div class="col">
+              <label>Entity Type</label>
+              <p class="help-text">Type of entity to search for (auto-detected if not specified)</p>
+            </div>
+            <div class="col">
+              <select id="entity-type">
+                <option value="">Select entity type...</option>
+                <option value="company">Company</option>
+                <option value="people">People</option>
+                <option value="news">News</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group row">
+            <div class="col">
+              <label>Number of results</label>
+              <p class="help-text">Looking for more results? <a>Upgrade your plan</a></p>
+            </div>
+            <div class="col">
+              <input type="number" id="count-input" value="10" min="1" max="1000">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Enrichments</label>
+            <p class="help-text">Extract additional data from found items</p>
+            <button type="button" class="add-btn">+ Add Enrichment</button>
+          </div>
+
+          <div class="form-group">
+            <label>Search Criteria</label>
+            <p class="help-text">Comma-separated list of criteria descriptions (max 5)</p>
+            <textarea id="criteria-input" placeholder="e.g. Based in California, Raised Series A, Founded after 2020"></textarea>
+          </div>
+        </form>
+      </main>
+
+      <!-- Right Panel: Code Output -->
+      <aside class="code-panel">
+        <div class="panel-header">
+          <div class="code-tabs">
+            <a href="#" class="code-tab active">Python</a>
+            <a href="#" class="code-tab">cURL</a>
+          </div>
+        </div>
+        <div class="code-container">
+          <pre><code id="code-output">
+from search_engine import DeepSearch
+
+ds = DeepSearch()
+
+webset = ds.websets.create(
+    search = {
+        "query": "Biggest AI companies by revenue",
+        "count": 10
+    }
+)
+
+print(f"Webset created: {webset.id}")
+          </code></pre>
+          <button class="copy-btn">📋</button>
+        </div>
+        
+        <div class="api-response" id="api-response" style="display: none;">
+          <h3>API Response</h3>
+          <pre><code id="response-output"></code></pre>
+        </div>
+      </aside>
+    </div>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>

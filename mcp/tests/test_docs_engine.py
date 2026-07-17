@@ -3,6 +3,7 @@ import pytest
 import json
 import tempfile
 import os
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 from search.docs_engine import DocsSearchEngine
 from crawlers.base import CrawlResult
@@ -36,10 +37,17 @@ def engine_with_mock_deps():
             mock_vs.search.return_value = []
             MockVS.return_value = mock_vs
 
+            cache_file = Path(temp_path).parent / "docs_cache.json"
+            if cache_file.exists():
+                cache_file.unlink()
+
             engine = DocsSearchEngine(temp_path)
             yield engine
     finally:
         os.unlink(temp_path)
+        cache_file = Path(temp_path).parent / "docs_cache.json"
+        if cache_file.exists():
+            cache_file.unlink()
 
 
 @pytest.mark.asyncio
