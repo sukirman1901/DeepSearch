@@ -19,6 +19,7 @@ from search.smart_search import SmartSearchEngine
 from search.sitemap import SiteMapper
 from search.extract import ContentExtractor
 from crawlers.web_crawler import WebCrawler
+from search.docs_engine import DocsSearchEngine
 
 mcp = FastMCP("DeepSearchEngine")
 engine = SearchEngine()
@@ -32,6 +33,10 @@ webset_manager = WebsetManager()
 smart_engine = SmartSearchEngine(engine.crawler_manager, engine.vector_store)
 site_mapper = SiteMapper()
 content_extractor = ContentExtractor()
+from pathlib import Path
+docs_engine = DocsSearchEngine(
+    str(Path(__file__).parent / "data" / "docs_library_registry.json")
+)
 
 
 # =============================================================================
@@ -72,6 +77,10 @@ async def search(
     budget_tokens: int = 0,
     num_results: int = 0,
     tokens_target: int = 5000,
+    # docs mode
+    library: str = "",
+    version: str = "",
+    docs_refresh: bool = False,
 ) -> str:
     """
     Unified search tool — all search modes in one.
@@ -84,6 +93,7 @@ async def search(
       - "smart": Compact IR overview + full details for top N (saves 50-70% tokens)
       - "code": Search GitHub + Stack Overflow for code snippets
       - "context": Token-budget-aware snippet packing for agents
+      - "docs": Search documentation libraries (requires 'library' param)
 
     Args:
         query: Search query in natural language
@@ -120,7 +130,32 @@ async def search(
         budget_tokens: Max tokens for returned context (context mode, default 8000)
         num_results: Max results to consider before budget packing (context mode)
         tokens_target: Target token count for code snippets (default 5000)
+
+        # Docs mode:
+        library: Documentation library to search (e.g., "python", "react")
+        version: Specific library version (optional, defaults to latest)
+        docs_refresh: Force refresh cached docs (default False)
     """
+    # --- DOCS MODE ---
+    if mode == "docs":
+        if not library:
+            available = ", ".join(docs_engine.registry.list_libraries())
+            return f"Error: 'library' required for docs mode. Available: {available}"
+
+        try:
+            result = await docs_engine.search(
+                query=query,
+                library=library,
+                version=version,
+                force_refresh=docs_refresh,
+                tokens_target=tokens_target,
+            )
+            return result.formatted
+        except ValueError as e:
+            return f"Error: {str(e)}"
+        except Exception as e:
+            return f"Error searching docs: {str(e)}"
+
     # --- QUICK MODE ---
     if mode == "quick":
         from crawlers.duckduckgo_crawler import DuckDuckGoCrawler
