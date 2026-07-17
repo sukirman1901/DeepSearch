@@ -1,0 +1,60 @@
+{
+  "version": "1.0",
+  "libraries": {
+    "react": {
+      "name": "React",
+      "docs_url": "https://react.dev",
+      "start_paths": ["/reference", "/learn"],
+      "content_selector": "main",
+      "nav_selector": "aside a",
+      "exclude_paths": ["/blog", "/community", "/versions", "/style-guide"],
+      "include_paths": [],
+      "max_pages": 200,
+      "ttl_hours": 168
+    },
+    "nextjs": {
+      "name": "Next.js",
+      "docs_url": "https://nextjs.org/docs",
+      "start_paths": ["/app", "/pages", "/api-reference"],
+      "content_selector": "main",
+      "nav_selector": "nav a",
+      "exclude_paths": ["/blog", "/learn"],
+      "include_paths": [],
+      "max_pages": 300,
+      "ttl_hours": 168
+    },
+    "vue": {
+      "name": "Vue.js",
+      "docs_url": "https://vuejs.org",
+      "start_paths": ["/guide", "/api"],
+      "content_selector": ".content",
+      "nav_selector": ".sidebar a",
+      "exclude_paths": ["/blog", "/partners", "/ecosystem"],
+      "include_paths": [],
+      "max_pages": 150,
+      "ttl_hours": 168
+    },
+    "supabase": {
+      "name": "Supabase",
+      "docs_url": "https://supabase.com/docs",
+      "start_paths": ["/guides/getting-started", "/reference"],
+      "content_selector": "article",
+      "nav_selector": "nav a",
+      "exclude_paths": ["/blog", "/pricing"],
+      "include_paths": [],
+      "max_pages": 250,
+      "ttl_hours": 168
+    },
+    "prisma": {
+      "name": "Prisma",
+      "docs_url": "https://www.prisma.io/docs",
+      "start_paths": ["/orm", "/orm/more"],
+      "content_selector": "main",
+      "nav_selector": "nav a",
+      "exclude_paths": ["/blog", "/community"],
+      "include_paths": [],
+      "max_pages": 200,
+      "ttl_hours": 168
+    }
+  }
+}
